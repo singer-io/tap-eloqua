@@ -9,11 +9,19 @@ class Server5xxError(Exception):
     pass
 
 class EloquaClient(object):
-    def __init__(self, client_id, client_secret, refresh_token, redirect_uri):
+    def __init__(self,
+                 config_path,
+                 client_id,
+                 client_secret,
+                 refresh_token,
+                 redirect_uri,
+                 user_agent):
+        self.__config_path = config_path
         self.__client_id = client_id
         self.__client_secret = client_secret
         self.__refresh_token = refresh_token
         self.__redirect_uri = redirect_uri
+        self.__user_agent = user_agent
         self.__access_token = None
         self.__expires = None
         self.__session = requests.Session()
@@ -34,9 +42,14 @@ class EloquaClient(object):
         if self.__access_token is not None and self.__expires > datetime.utcnow():
             return
 
+        headers = {}
+        if self.__user_agent:
+            headers['User-Agent'] = self.__user_agent
+
         response = self.__session.post(
             'https://login.eloqua.com/auth/oauth2/token',
             auth=(self.__client_id, self.__client_secret),
+            headers=headers,
             data={
                 'grant_type': 'refresh_token',
                 'refresh_token': self.__refresh_token,
@@ -57,12 +70,11 @@ class EloquaClient(object):
         self.__access_token = data['access_token']
         self.__refresh_token = data['refresh_token']
 
-        ## TODO: save refresh token
-        ## HACK: remove once this is solved
-        with open('./test.config.json') as file:
+        ## refresh_token rotates on every reauth
+        with open(self.__config_path) as file:
             config = json.load(file)
         config['refresh_token'] = data['refresh_token']
-        with open('./test.config.json', 'w') as file:
+        with open(self.__config_path, 'w') as file:
             json.dump(config, file, indent=2)
 
         expires_seconds = data['expires_in'] - 10 # pad by 10 seconds
@@ -96,6 +108,9 @@ class EloquaClient(object):
         if 'headers' not in kwargs:
             kwargs['headers'] = {}
         kwargs['headers']['Authorization'] = 'Bearer {}'.format(self.__access_token)
+
+        if self.__user_agent:
+            kwargs['headers']['User-Agent'] = self.__user_agent
 
         with metrics.http_request_timer(endpoint) as timer:
             response = self.__session.request(method, url, **kwargs)

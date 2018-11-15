@@ -3,8 +3,9 @@ import time
 import random
 from datetime import datetime, timedelta
 
+import pendulum
 import singer
-from singer import metrics, metadata, Transformer
+from singer import metrics, metadata, Transformer, UNIX_SECONDS_INTEGER_DATETIME_PARSING
 
 from tap_eloqua.schema import (
     PKS,
@@ -25,6 +26,19 @@ def next_sleep_interval(previous_sleep_interval):
     max_interval = previous_sleep_interval * 2 or MIN_RETRY_INTERVAL
     return min(MAX_RETRY_INTERVAL, random.randint(min_interval, max_interval))
 
+def get_bookmark(state, stream, default):
+    return (
+        state
+        .get('bookmarks', {})
+        .get('visitors', default)
+    )
+
+def write_bookmark(state, stream, value):
+    if 'bookmarks' not in state:
+        state['bookmarks'] = {}
+    state['bookmarks'][stream] = value
+    singer.write_state(state)
+
 def write_schema(catalog, stream_id):
     stream = catalog.get_stream(stream_id)
     schema = stream.schema.to_dict()
@@ -37,7 +51,8 @@ def persist_records(catalog, stream_id, records):
     stream_metadata = metadata.to_map(stream.metadata)
     with metrics.record_counter(stream_id) as counter:
         for record in records:
-            with Transformer() as transformer:
+            with Transformer(
+                integer_datetime_fmt=UNIX_SECONDS_INTEGER_DATETIME_PARSING) as transformer:
                 record = transformer.transform(record,
                                                schema,
                                                stream_metadata)
@@ -53,6 +68,8 @@ def transform_export_row(row):
     return out
 
 def stream_export(client, catalog, stream_name, sync_id):
+    LOGGER.info('{} - Pulling export results - {}'.format(stream_name, sync_id))
+
     write_schema(catalog, stream_name)
 
     limit = 50000
@@ -74,6 +91,8 @@ def stream_export(client, catalog, stream_name, sync_id):
             persist_records(catalog, stream_name, records)
 
 def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type=None):
+    LOGGER.info('{} - Starting export'.format(stream_name))
+
     stream = catalog.get_stream(stream_name)
 
     fields = {}
@@ -98,8 +117,6 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type
     else:
         url_obj = stream_name
 
-    print(params)
-
     data = client.post(
         '/api/bulk/2.0/{}/exports'.format(url_obj),
         json=params,
@@ -113,6 +130,8 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type
         endpoint='export_create_sync')
 
     sync_id = re.match(r'/syncs/([0-9]+)', data['uri']).groups()[0]
+
+    LOGGER.info('{} - Created export - {}'.format(stream_name, sync_id))
 
     sleep = 0
     start_time = time.time()
@@ -145,6 +164,72 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type
                     sleep))
         time.sleep(sleep)
 
+def sync_campaigns(client, catalog, state, start_date):
+    write_schema(catalog, 'campaigns')
+
+    last_campaign_raw = get_bookmark(state, 'campaigns', start_date)
+    last_campaign = pendulum.parse(last_campaign_raw).to_datetime_string()
+    search = "updatedAt>='{}'".format(last_campaign)
+
+    page = 1
+    count = 1000
+    while True:
+        data = client.get(
+            '/api/REST/2.0/assets/campaigns',
+            params={
+                'count': count,
+                'page': page,
+                'depth': 'complete',
+                'orderBy': 'updatedAt',
+                'search': search
+            },
+            endpoint='campaigns')
+        page += 1
+        records = data['elements']
+
+        persist_records(catalog, 'campaigns', records)
+
+        if records:
+            max_updated_at = pendulum.from_timestamp(
+                int(records[-1]['updatedAt'])).to_iso8601_string()
+            write_bookmark(state, 'campaigns', max_updated_at)
+
+        if len(records) < count:
+            break
+
+def sync_visitors(client, catalog, state, start_date):
+    write_schema(catalog, 'visitors')
+
+    last_visit_raw = get_bookmark(state, 'visitors', start_date)
+    last_visit = pendulum.parse(last_visit_raw).to_datetime_string()
+    search = "v_LastVisitDateAndTime>='{}'".format(last_visit)
+
+    page = 1
+    count = 1000
+    while True:
+        data = client.get(
+            '/api/REST/2.0/data/visitors',
+            params={
+                'count': count,
+                'page': page,
+                'depth': 'complete',
+                'orderBy': 'v_LastVisitDateAndTime',
+                'search': search
+            },
+            endpoint='visitors')
+        page += 1
+        records = data['elements']
+
+        persist_records(catalog, 'visitors', records)
+
+        if records:
+            max_visit = pendulum.from_timestamp(
+                records[-1]['v_LastVisitDateAndTime']).to_iso8601_string()
+            write_bookmark(state, 'visitors', max_visit)
+
+        if len(records) < count:
+            break
+
 def get_selected_streams(catalog):
     selected_streams = set()
     for stream in catalog.streams:
@@ -154,7 +239,7 @@ def get_selected_streams(catalog):
             selected_streams.add(stream.tap_stream_id)
     return list(selected_streams)
 
-def sync_bulk(client, catalog, state, start_date):
+def sync(client, catalog, state, start_date):
     selected_streams = get_selected_streams(catalog)
 
     if not selected_streams:
@@ -177,3 +262,9 @@ def sync_bulk(client, catalog, state, start_date):
                           start_date,
                           stream_name,
                           activity_type=activity_type)
+
+    if 'visitors' in selected_streams:
+        sync_visitors(client, catalog, state, start_date)
+
+    if 'campaigns' in selected_streams:
+        sync_campaigns(client, catalog, state, start_date)

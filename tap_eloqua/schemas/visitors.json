@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "type": "string"
+    },
+    "visitorId": {
+      "type": "string"
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "contactId": {
+      "type": "string"
+    },
+    "V_IPAddress": {
+      "type": "string"
+    },
+    "V_LastVisitDateAndTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "id":{
+      "type":"integer"
+    }
+  }
+}

@@ -1,4 +1,6 @@
 import re
+import os
+import json
 
 SCHEMAS = None
 FIELD_METADATA = None
@@ -52,7 +54,10 @@ def camel_to_snake(name):
 def activity_type_to_stream(activity_type):
     return 'activity_' + camel_to_snake(activity_type)
 
-PKS = {}
+PKS = {
+    'campaigns': ['id'],
+    'visitors': ['id']
+}
 
 for bulk_object in BUILT_IN_BULK_OBJECTS:
     PKS[bulk_object] = ['Id']
@@ -141,6 +146,7 @@ def get_bulk_schema(client, stream_name, path, system_fields, activity_type=None
 
     schema = {
         'properties': properties,
+        'additionalProperties': False,
         'type': 'object'
     }
 
@@ -152,6 +158,40 @@ def get_bulk_obj_schema(client, stream_name, obj_name, system_fields, **kwargs):
                            '/api/bulk/2.0/{}/fields'.format(obj_name),
                            system_fields,
                            **kwargs)
+
+def get_abs_path(path):
+    return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
+
+def get_static_schemas():
+    global SCHEMAS, FIELD_METADATA
+
+    schemas_path = get_abs_path('schemas')
+
+    file_names = [f for f in os.listdir(schemas_path)
+                  if os.path.isfile(os.path.join(schemas_path, f))]
+
+    SCHEMAS = {}
+    for file_name in file_names:
+        stream_name = file_name[:-5]
+        with open(os.path.join(schemas_path, file_name)) as data_file:
+            schema = json.load(data_file)
+            
+        SCHEMAS[stream_name] = schema
+        pk = PKS[stream_name]
+
+        metadata = []
+        for prop, json_schema in schema['properties'].items():
+            if prop in pk:
+                inclusion = 'automatic'
+            else:
+                inclusion = 'available'
+            metadata.append({
+                'metadata': {
+                    'inclusion': inclusion
+                },
+                'breadcrumb': ['properties', prop]
+            })
+        FIELD_METADATA[stream_name] = metadata
 
 def get_schemas(client):
     global SCHEMAS, FIELD_METADATA
@@ -208,5 +248,7 @@ def get_schemas(client):
 
         SCHEMAS[stream_name] = json_schema
         FIELD_METADATA[stream_name] = metadata
+
+    get_static_schemas()
 
     return SCHEMAS, FIELD_METADATA
