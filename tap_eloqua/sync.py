@@ -11,6 +11,7 @@ from tap_eloqua.schema import (
     PKS,
     BUILT_IN_BULK_OBJECTS,
     ACTIVITY_TYPES,
+    QUERY_LANGUAGE_MAP,
     get_schemas,
     activity_type_to_stream
 )
@@ -67,7 +68,7 @@ def transform_export_row(row):
         out[field] = value
     return out
 
-def stream_export(client, catalog, stream_name, sync_id):
+def stream_export(client, state, catalog, stream_name, sync_id, updated_at_field):
     LOGGER.info('{} - Pulling export results - {}'.format(stream_name, sync_id))
 
     write_schema(catalog, stream_name)
@@ -75,6 +76,7 @@ def stream_export(client, catalog, stream_name, sync_id):
     limit = 50000
     offset = 0
     has_true = True
+    max_updated_at = None
     while has_true:
         data = client.get(
             '/api/bulk/2.0/syncs/{}/data'.format(sync_id),
@@ -90,6 +92,13 @@ def stream_export(client, catalog, stream_name, sync_id):
             records = map(transform_export_row, data['items'])
             persist_records(catalog, stream_name, records)
 
+            max_page_updated_at = max(map(lambda x: x[updated_at_field], data['items']))
+            if max_updated_at is None or max_page_updated_at > max_updated_at:
+                max_updated_at = max_page_updated_at
+
+    if max_updated_at:
+        write_bookmark(state, stream_name, max_updated_at)
+
 def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type=None):
     LOGGER.info('{} - Starting export'.format(stream_name))
 
@@ -101,16 +110,32 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type
             field_name = meta['breadcrumb'][1]
             fields[field_name] = meta['metadata']['tap-eloqua.statement']
 
+    last_date_raw = get_bookmark(state, stream_name, start_date)
+    last_date = pendulum.parse(last_date_raw).to_datetime_string()
+
+    if activity_type is not None:
+        language_obj = 'Activity'
+    else:
+        language_obj = QUERY_LANGUAGE_MAP[stream_name]
+
+    if activity_type:
+        updated_at_field = 'CreatedAt'
+    else:
+        updated_at_field = 'UpdatedAt'
+
+    _filter = "'{{" + language_obj + "." + updated_at_field + "}}' >= '" + last_date + "'"
+
+    if activity_type is not None:
+        _filter += " AND '{{Activity.Type}}' = '" + activity_type + "'"
+
     params = {
         'name': 'Singer Sync - ' + datetime.utcnow().isoformat(),
         'fields': fields,
-        # 'filter': ,
-        # 'autoDeleteDuration': (datetime.utcnow() + timedelta(hours=6)).isoformat(),
-        # 'areSystemTimestampsInUTC': True
+        'filter': _filter,
+        'areSystemTimestampsInUTC': True
     }
 
-    if activity_type:
-        params['filter'] = "'{{Activity.Type}}'='" + activity_type + "'"
+    print(params)
 
     if activity_type:
         url_obj = 'activities'
@@ -142,7 +167,12 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type
 
         status = data['status']
         if status == 'success' or status == 'active':
-            stream_export(client, catalog, stream_name, sync_id)
+            stream_export(client,
+                          state,
+                          catalog,
+                          stream_name,
+                          sync_id,
+                          updated_at_field)
             break
         elif status != 'pending':
             message = '{} - status: {}, exporting failed'.format(

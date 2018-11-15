@@ -29,18 +29,18 @@ QUERY_LANGUAGE_MAP = {
 
 # https://docs.oracle.com/cloud/latest/marketingcs_gs/OMCAB/Developers/BulkAPI/Reference/Bulk%20languages/eloqua-markup-language-v3.htm
 
-ID_SYSTEM_FIELD = {
+BASE_SYSTEM_FIELD = {
     'Id': {
         'type': 'integer'
+    },
+    'CreatedAt': {
+        'type': 'string',
+        'format': 'date-time'
     }
 }
 
 BULK_SYSTEM_FIELDS = {
-    **ID_SYSTEM_FIELD,
-    'CreatedAt': {
-        'type': 'string',
-        'format': 'date-time'
-    },
+    **BASE_SYSTEM_FIELD,
     'UpdatedAt': {
         'type': 'string',
         'format': 'date-time'
@@ -74,6 +74,10 @@ def get_type(eloqua_field):
         json_format = 'date-time'
     elif eloqua_type == 'number':
         json_type = 'number'
+
+    ## CampaignId and other ID types have a number type but contain letters
+    if eloqua_field['internalName'][-2:] == 'Id' and json_type == 'number':
+        json_type = 'string'
 
     return ['null', json_type], json_format
 
@@ -214,7 +218,7 @@ def get_schemas(client):
         json_schema, metadata = get_bulk_obj_schema(client,
                                                     stream_name,
                                                     'activities',
-                                                    ID_SYSTEM_FIELD,
+                                                    BASE_SYSTEM_FIELD,
                                                     activity_type=activity_type)
         SCHEMAS[stream_name] = json_schema
         FIELD_METADATA[stream_name] = metadata
@@ -243,7 +247,7 @@ def get_schemas(client):
             client,
             stream_name,
             '/api/bulk/2.0/customObjects/{}/fields'.format(object_id),
-            ID_SYSTEM_FIELD)
+            BASE_SYSTEM_FIELD)
 
         SCHEMAS[stream_name] = json_schema
         FIELD_METADATA[stream_name] = metadata
