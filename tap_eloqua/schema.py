@@ -170,7 +170,6 @@ def get_static_schemas():
     file_names = [f for f in os.listdir(schemas_path)
                   if os.path.isfile(os.path.join(schemas_path, f))]
 
-    SCHEMAS = {}
     for file_name in file_names:
         stream_name = file_name[:-5]
         with open(os.path.join(schemas_path, file_name)) as data_file:
