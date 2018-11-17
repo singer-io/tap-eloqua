@@ -106,7 +106,9 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type
 
     fields = {}
     for meta in stream.metadata:
-        if meta['breadcrumb']:
+        if meta['breadcrumb'] and \
+            (meta['metadata'].get('selected', True) or
+             meta['metadata'].get('inclusion', 'available') == 'automatic'):
             field_name = meta['breadcrumb'][1]
             fields[field_name] = meta['metadata']['tap-eloqua.statement']
 
@@ -135,64 +137,64 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type
         'areSystemTimestampsInUTC': True
     }
 
-    print(params)
-
     if activity_type:
         url_obj = 'activities'
     else:
         url_obj = stream_name
 
-    data = client.post(
-        '/api/bulk/2.0/{}/exports'.format(url_obj),
-        json=params,
-        endpoint='export_create_def')
+    with metrics.job_timer('bulk_export'):
+        data = client.post(
+            '/api/bulk/2.0/{}/exports'.format(url_obj),
+            json=params,
+            endpoint='export_create_def')
 
-    data = client.post(
-        '/api/bulk/2.0/syncs',
-        json={
-            'syncedInstanceUri': data['uri']
-        },
-        endpoint='export_create_sync')
+        data = client.post(
+            '/api/bulk/2.0/syncs',
+            json={
+                'syncedInstanceUri': data['uri']
+            },
+            endpoint='export_create_sync')
 
-    sync_id = re.match(r'/syncs/([0-9]+)', data['uri']).groups()[0]
+        sync_id = re.match(r'/syncs/([0-9]+)', data['uri']).groups()[0]
 
-    LOGGER.info('{} - Created export - {}'.format(stream_name, sync_id))
+        LOGGER.info('{} - Created export - {}'.format(stream_name, sync_id))
 
-    sleep = 0
-    start_time = time.time()
-    while True:
-        data = client.get(
-            '/api/bulk/2.0/syncs/{}'.format(sync_id),
-            endpoint='export_sync_poll')
+        sleep = 0
+        start_time = time.time()
+        while True:
+            data = client.get(
+                '/api/bulk/2.0/syncs/{}'.format(sync_id),
+                endpoint='export_sync_poll')
 
-        status = data['status']
-        if status == 'success' or status == 'active':
-            stream_export(client,
-                          state,
-                          catalog,
-                          stream_name,
-                          sync_id,
-                          updated_at_field)
-            break
-        elif status != 'pending':
-            message = '{} - status: {}, exporting failed'.format(
-                    stream_name,
-                    status)
-            LOGGER.error(message)
-            raise Exception(message)
-        elif (time.time() - start_time) > MAX_RETRY_ELAPSED_TIME:
-            message = '{} - export deadline exceeded ({} secs)'.format(
-                    stream_name,
-                    MAX_RETRY_ELAPSED_TIME)
-            LOGGER.error(message)
-            raise Exception(message)
+            status = data['status']
+            if status == 'success' or status == 'active':
+                break
+            elif status != 'pending':
+                message = '{} - status: {}, exporting failed'.format(
+                        stream_name,
+                        status)
+                LOGGER.error(message)
+                raise Exception(message)
+            elif (time.time() - start_time) > MAX_RETRY_ELAPSED_TIME:
+                message = '{} - export deadline exceeded ({} secs)'.format(
+                        stream_name,
+                        MAX_RETRY_ELAPSED_TIME)
+                LOGGER.error(message)
+                raise Exception(message)
 
-        sleep = next_sleep_interval(sleep)
-        LOGGER.info('{} - status: {}, sleeping for {} seconds'.format(
-                    stream_name,
-                    status,
-                    sleep))
-        time.sleep(sleep)
+            sleep = next_sleep_interval(sleep)
+            LOGGER.info('{} - status: {}, sleeping for {} seconds'.format(
+                        stream_name,
+                        status,
+                        sleep))
+            time.sleep(sleep)
+
+    stream_export(client,
+                  state,
+                  catalog,
+                  stream_name,
+                  sync_id,
+                  updated_at_field)
 
 def sync_campaigns(client, catalog, state, start_date):
     write_schema(catalog, 'campaigns')
