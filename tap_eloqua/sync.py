@@ -271,14 +271,27 @@ def get_selected_streams(catalog):
             selected_streams.add(stream.tap_stream_id)
     return list(selected_streams)
 
+def update_current_stream(state, stream_name):
+    state['current_stream'] = stream_name
+    singer.write_state(state)
+
+def should_sync_stream(last_stream, selected_streams, stream_name):
+    if last_stream == stream_name or \
+       (last_stream is None and stream_name in selected_streams):
+       return True
+    return False
+
 def sync(client, catalog, state, start_date):
     selected_streams = get_selected_streams(catalog)
 
     if not selected_streams:
         return
 
+    last_stream = state.get('current_stream')
+
     for bulk_object in BUILT_IN_BULK_OBJECTS:
-        if bulk_object in selected_streams:
+        if should_sync_stream(last_stream, selected_streams, bulk_object):
+            update_current_stream(state, bulk_object)
             sync_bulk_obj(client,
                           catalog,
                           state,
@@ -287,7 +300,8 @@ def sync(client, catalog, state, start_date):
 
     for activity_type in ACTIVITY_TYPES:
         stream_name = activity_type_to_stream(activity_type)
-        if stream_name in selected_streams:
+        if should_sync_stream(last_stream, selected_streams, stream_name):
+            update_current_stream(state, stream_name)
             sync_bulk_obj(client,
                           catalog,
                           state,
@@ -295,8 +309,12 @@ def sync(client, catalog, state, start_date):
                           stream_name,
                           activity_type=activity_type)
 
-    if 'visitors' in selected_streams:
+    if should_sync_stream(last_stream, selected_streams, 'visitors'):
+        update_current_stream(state, 'visitors')
         sync_visitors(client, catalog, state, start_date)
 
-    if 'campaigns' in selected_streams:
+    if should_sync_stream(last_stream, selected_streams, 'campaigns'):
+        update_current_stream(state, 'campaigns')
         sync_campaigns(client, catalog, state, start_date)
+
+    update_current_stream(state, None)
