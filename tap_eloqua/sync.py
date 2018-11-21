@@ -206,6 +206,7 @@ def sync_campaigns(client, catalog, state, start_date):
     page = 1
     count = 1000
     while True:
+        LOGGER.info('Syncing campaigns since {} - page {}'.format(last_campaign, page))
         data = client.get(
             '/api/REST/2.0/assets/campaigns',
             params={
@@ -239,6 +240,7 @@ def sync_visitors(client, catalog, state, start_date):
     page = 1
     count = 1000
     while True:
+        LOGGER.info('Syncing visitors since {} - page {}'.format(last_visit, page))
         data = client.get(
             '/api/REST/2.0/data/visitors',
             params={
