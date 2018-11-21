@@ -75,8 +75,10 @@ def get_type(eloqua_field):
     elif eloqua_type == 'number':
         json_type = 'number'
 
-    ## CampaignId and other ID types have a number type but contain letters
-    if eloqua_field['internalName'][-2:] == 'Id' and json_type == 'number':
+    internal_name = eloqua_field['internalName']
+    name_last_two = internal_name[-2:]
+    if internal_name == 'Duration' or \
+       ((name_last_two == 'Id' or name_last_two == 'ID') and json_type == 'number'):
         json_type = 'string'
 
     return ['null', json_type], json_format
