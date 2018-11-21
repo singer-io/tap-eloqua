@@ -65,6 +65,11 @@ for bulk_object in BUILT_IN_BULK_OBJECTS:
 for activity_type in ACTIVITY_TYPES:
     PKS[activity_type_to_stream(activity_type)] = ['Id']
 
+def get_pk(stream_name):
+    if stream_name in PKS:
+        return PKS[stream_name]
+    return ['Id']
+
 def get_type(eloqua_field):
     eloqua_type = eloqua_field['dataType']
 
@@ -92,7 +97,13 @@ def to_meta(inclusion, statement, field_name):
         'breadcrumb': ['properties', field_name]
     }
 
-def get_bulk_schema(client, stream_name, path, system_fields, activity_type=None):
+def get_bulk_schema(client,
+                    stream_name,
+                    path,
+                    system_fields,
+                    query_language_name=None,
+                    activity_type=None,
+                    object_id=None):
     params = {}
     if activity_type:
         params['activityType'] = activity_type
@@ -106,22 +117,33 @@ def get_bulk_schema(client, stream_name, path, system_fields, activity_type=None
     properties = {}
     metadata = []
 
-    if activity_type is not None:
-        language_obj = 'Activity'
-    else:
-        language_obj = QUERY_LANGUAGE_MAP[stream_name]
+    if not query_language_name:
+        if activity_type is not None:
+            query_language_name = 'Activity'
+        elif stream_name in QUERY_LANGUAGE_MAP:
+            query_language_name = QUERY_LANGUAGE_MAP[stream_name]
+
+    metadata.append({
+        'metadata': {
+            'tap-eloqua.id': object_id,
+            'tap-eloqua.query-language-name': query_language_name
+        },
+        'breadcrumb': []
+    })
+
+    pk = get_pk(stream_name)
 
     for prop, json_schema in system_fields.items():
         properties[prop] = json_schema
 
-        if prop in PKS[stream_name]:
+        if prop in pk:
             inclusion = 'automatic'
         else:
             inclusion = 'available'
 
         statement = (
             '{{' +
-            language_obj +
+            query_language_name +
             '.' +
             prop +
             '}}'
@@ -242,14 +264,14 @@ def get_schemas(client):
             .replace('-', '_')
         )
 
-        PKS[stream_name] = ['Id']
-        QUERY_LANGUAGE_MAP[stream_name] = 'CustomObject[{}]'.format(object_id)
-
+        query_language_name = 'CustomObject[{}]'.format(object_id)
         json_schema, metadata = get_bulk_schema(
             client,
             stream_name,
             '/api/bulk/2.0/customObjects/{}/fields'.format(object_id),
-            BASE_SYSTEM_FIELD)
+            BASE_SYSTEM_FIELD,
+            query_language_name=query_language_name,
+            object_id=object_id)
 
         SCHEMAS[stream_name] = json_schema
         FIELD_METADATA[stream_name] = metadata
