@@ -65,8 +65,6 @@ class EloquaClient(object):
 
         data = response.json()
 
-        print(data)
-
         self.__access_token = data['access_token']
         self.__refresh_token = data['refresh_token']
 
