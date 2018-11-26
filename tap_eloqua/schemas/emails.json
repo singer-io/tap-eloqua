@@ -1,0 +1,162 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "currentStatus": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "permissions": {
+      "type": "string"
+    },
+    "createdBy": {
+      "type": "string"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedBy": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "accessedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "depth": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "senderName": {
+      "type": "string"
+    },
+    "senderEmail": {
+      "type": "string"
+    },
+    "replyToName": {
+      "type": "string"
+    },
+    "replyToEmail": {
+      "type": "string"
+    },
+    "bounceBackEmail": {
+      "type": "string"
+    },
+    "virtualMTAId": {
+      "type": "string"
+    },
+    "htmlContent": {
+      "$ref":"#/definitions/HtmlContentRest10"
+    },
+    "plainText": {
+      "type": "string"
+    },
+    "isPlainTextEditable": {
+      "type": "string"
+    },
+    "sendPlainTextOnly": {
+      "type": "string"
+    },
+    "isTracked": {
+      "type": "string"
+    },
+    "layout": {
+      "type": "string"
+    },
+    "style": {
+      "type": "string"
+    },
+    "forms": {
+      "type": "array",
+      "items": {
+        "$ref":"#/definitions/FormRest10"
+      }
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "$ref":"#/definitions/ImageFileRest10"
+      }
+    },
+    "hyperlinks": {
+      "type": "array",
+      "items": {
+        "$ref":"#/definitions/HyperlinkRest10"
+      }
+    },
+    "contentSections": {
+      "type": "array",
+      "items": {
+        "$ref":"#/definitions/ContentSectionRest10"
+      }
+    },
+    "dynamicContents": {
+      "type": "array",
+      "items": {
+        "$ref":"#/definitions/DynamicContentRest10"
+      }
+    },
+    "landingPages": {
+      "type": "array",
+      "items": {
+        "$ref":"#/definitions/LandingPageRest10"
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "$ref":"#/definitions/ImportedFileRest10"
+      }
+    },
+    "emailHeaderId": {
+      "type": "string"
+    },
+    "emailFooterId": {
+      "type": "string"
+    },
+    "emailGroupId": {
+      "type": "string"
+    },
+    "encodingId": {
+      "type": "string"
+    },
+    "fieldMerges": {
+      "type": "array",
+      "items": {
+        "$ref":"#/definitions/FieldMergeRest10"
+      }
+    },
+    "archive": {
+      "type": "boolean"
+    },
+    "folderId": {
+      "type": "string"
+    },
+    "isContentProtected": {
+      "type": "boolean"
+    },
+    "isPrivate": {
+      "type": "boolean"
+    },
+    "renderMode": {
+      "type": "string"
+    }
+  }
+}

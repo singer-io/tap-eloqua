@@ -56,6 +56,7 @@ def activity_type_to_stream(activity_type):
 
 PKS = {
     'campaigns': ['id'],
+    'emails': ['id'],
     'visitors': ['id']
 }
 
