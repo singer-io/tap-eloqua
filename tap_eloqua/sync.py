@@ -296,6 +296,40 @@ def sync_forms(client, catalog, state, start_date):
         if len(records) < count:
             break
 
+def sync_assets(client, catalog, state, start_date):
+    write_schema(catalog, 'assets')
+
+    last_date_raw = get_bookmark(state, 'assets', start_date)
+    last_date = pendulum.parse(last_date_raw).to_datetime_string()
+    search = "updatedAt>='{}'".format(last_date)
+
+    page = 1
+    count = 1000
+    while True:
+        LOGGER.info('Syncing assets since {} - page {}'.format(last_date, page))
+        data = client.get(
+            '/api/REST/2.0/assets/externals',
+            params={
+                'count': count,
+                'page': page,
+                'depth': 'complete',
+                'orderBy': 'updatedAt',
+                'search': search
+            },
+            endpoint='assets')
+        page += 1
+        records = data.get('elements', [])
+
+        persist_records(catalog, 'assets', records)
+
+        if records:
+            max_updated_at = pendulum.from_timestamp(
+                int(records[-1]['updatedAt'])).to_iso8601_string()
+            write_bookmark(state, 'assets', max_updated_at)
+
+        if len(records) < count:
+            break
+
 def sync_visitors(client, catalog, state, start_date):
     write_schema(catalog, 'visitors')
 
@@ -411,5 +445,9 @@ def sync(client, catalog, state, start_date):
     if should_sync_stream(last_stream, selected_streams, 'forms'):
         update_current_stream(state, 'forms')
         sync_forms(client, catalog, state, start_date)
+
+    if should_sync_stream(last_stream, selected_streams, 'assets'):
+        update_current_stream(state, 'assets')
+        sync_assets(client, catalog, state, start_date)
 
     update_current_stream(state, None)
