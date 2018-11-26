@@ -63,7 +63,9 @@
       "type": "string"
     },
     "htmlContent": {
-      "$ref":"#/definitions/HtmlContentRest10"
+      "type": "object",
+      "properties": {
+      }
     },
     "plainText": {
       "type": "string"
@@ -86,43 +88,57 @@
     "forms": {
       "type": "array",
       "items": {
-        "$ref":"#/definitions/FormRest10"
+        "type": "object",
+        "properties": {
+        }
       }
     },
     "images": {
       "type": "array",
       "items": {
-        "$ref":"#/definitions/ImageFileRest10"
+        "type": "object",
+        "properties": {
+        }
       }
     },
     "hyperlinks": {
       "type": "array",
       "items": {
-        "$ref":"#/definitions/HyperlinkRest10"
+        "type": "object",
+        "properties": {
+        }
       }
     },
     "contentSections": {
       "type": "array",
       "items": {
-        "$ref":"#/definitions/ContentSectionRest10"
+        "type": "object",
+        "properties": {
+        }
       }
     },
     "dynamicContents": {
       "type": "array",
       "items": {
-        "$ref":"#/definitions/DynamicContentRest10"
+        "type": "object",
+        "properties": {
+        }
       }
     },
     "landingPages": {
       "type": "array",
       "items": {
-        "$ref":"#/definitions/LandingPageRest10"
+        "type": "object",
+        "properties": {
+        }
       }
     },
     "files": {
       "type": "array",
       "items": {
-        "$ref":"#/definitions/ImportedFileRest10"
+        "type": "object",
+        "properties": {
+        }
       }
     },
     "emailHeaderId": {
@@ -140,7 +156,9 @@
     "fieldMerges": {
       "type": "array",
       "items": {
-        "$ref":"#/definitions/FieldMergeRest10"
+        "type": "object",
+        "properties": {
+        }
       }
     },
     "archive": {
