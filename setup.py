@@ -20,5 +20,7 @@ setup(name='tap-eloqua',
           tap-eloqua=tap_eloqua:main
       ''',
       packages=['tap_eloqua'],
-      include_package_data=True,
+      package_data = {
+          'tap_eloqua': ['schemas/*.json'],
+      },
 )
