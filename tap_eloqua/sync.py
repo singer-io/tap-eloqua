@@ -8,10 +8,8 @@ import singer
 from singer import metrics, metadata, Transformer, UNIX_SECONDS_INTEGER_DATETIME_PARSING
 
 from tap_eloqua.schema import (
-    PKS,
     BUILT_IN_BULK_OBJECTS,
     ACTIVITY_TYPES,
-    QUERY_LANGUAGE_MAP,
     get_schemas,
     activity_type_to_stream
 )
@@ -43,8 +41,7 @@ def write_bookmark(state, stream, value):
 def write_schema(catalog, stream_id):
     stream = catalog.get_stream(stream_id)
     schema = stream.schema.to_dict()
-    key_properties = PKS[stream_id]
-    singer.write_schema(stream_id, schema, key_properties)
+    singer.write_schema(stream_id, schema, stream.key_properties)
 
 def persist_records(catalog, stream_id, records):
     stream = catalog.get_stream(stream_id)
@@ -105,20 +102,19 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type
     stream = catalog.get_stream(stream_name)
 
     fields = {}
+    obj_meta = None
     for meta in stream.metadata:
-        if meta['breadcrumb'] and \
-            (meta['metadata'].get('selected', True) or
-             meta['metadata'].get('inclusion', 'available') == 'automatic'):
+        if not meta['breadcrumb']:
+            obj_meta = meta['metadata']
+        elif meta['metadata'].get('selected', True) or \
+             meta['metadata'].get('inclusion', 'available') == 'automatic':
             field_name = meta['breadcrumb'][1]
             fields[field_name] = meta['metadata']['tap-eloqua.statement']
 
     last_date_raw = get_bookmark(state, stream_name, start_date)
     last_date = pendulum.parse(last_date_raw).to_datetime_string()
 
-    if activity_type is not None:
-        language_obj = 'Activity'
-    else:
-        language_obj = QUERY_LANGUAGE_MAP[stream_name]
+    language_obj = obj_meta['tap-eloqua.query-language-name']
 
     if activity_type:
         updated_at_field = 'CreatedAt'
@@ -139,6 +135,8 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type
 
     if activity_type:
         url_obj = 'activities'
+    elif obj_meta['tap-eloqua.id']:
+        url_obj = 'customObjects/' + obj_meta['tap-eloqua.id']
     else:
         url_obj = stream_name
 
@@ -283,6 +281,15 @@ def should_sync_stream(last_stream, selected_streams, stream_name):
        return True
     return False
 
+def get_custom_obj_streams(catalog):
+    custom_streams = set()
+    for stream in catalog.streams:
+        mdata = metadata.to_map(stream.metadata)
+        root_metadata = mdata.get(())
+        if root_metadata and root_metadata.get('tap-eloqua.id'):
+            custom_streams.add(stream.tap_stream_id)
+    return list(custom_streams)
+
 def sync(client, catalog, state, start_date):
     selected_streams = get_selected_streams(catalog)
 
@@ -310,6 +317,16 @@ def sync(client, catalog, state, start_date):
                           start_date,
                           stream_name,
                           activity_type=activity_type)
+
+    for stream_name in get_custom_obj_streams(catalog):
+        if should_sync_stream(last_stream, selected_streams, stream_name):
+            update_current_stream(state, stream_name)
+            sync_bulk_obj(client,
+                          catalog,
+                          state,
+                          start_date,
+                          stream_name)
+
 
     if should_sync_stream(last_stream, selected_streams, 'visitors'):
         update_current_stream(state, 'visitors')
