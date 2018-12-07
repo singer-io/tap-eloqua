@@ -154,6 +154,12 @@ def get_bulk_schema(client,
 
     for eloqua_field in data['items']:
         field_name = eloqua_field['internalName']
+
+        if field_name in properties:
+            if field_name not in system_fields:
+                raise Exception('Duplicate field detected: {}'.format(field_name))
+            continue
+
         json_type, format = get_type(eloqua_field)
         json_schema = {
             'type': json_type
