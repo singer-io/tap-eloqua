@@ -194,172 +194,36 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type
                   sync_id,
                   updated_at_field)
 
-def sync_campaigns(client, catalog, state, start_date):
-    write_schema(catalog, 'campaigns')
+def sync_static_endpoint(client, catalog, state, start_date, stream_id, path, updated_at_col):
+    write_schema(catalog, stream_id)
 
-    last_date_raw = get_bookmark(state, 'campaigns', start_date)
+    last_date_raw = get_bookmark(state, stream_id, start_date)
     last_date = pendulum.parse(last_date_raw).to_datetime_string()
-    search = "updatedAt>='{}'".format(last_date)
+    search = "{}>='{}'".format(updated_at_col, last_date)
 
     page = 1
     count = 1000
     while True:
-        LOGGER.info('Syncing campaigns since {} - page {}'.format(last_date, page))
+        LOGGER.info('Syncing {} since {} - page {}'.format(stream_id, last_date, page))
         data = client.get(
-            '/api/REST/2.0/assets/campaigns',
+            '/api/REST/2.0/{}'.format(path),
             params={
                 'count': count,
                 'page': page,
                 'depth': 'complete',
-                'orderBy': 'updatedAt',
+                'orderBy': updated_at_col,
                 'search': search
             },
-            endpoint='campaigns')
+            endpoint=stream_id)
         page += 1
         records = data.get('elements', [])
 
-        persist_records(catalog, 'campaigns', records)
+        persist_records(catalog, stream_id, records)
 
         if records:
             max_updated_at = pendulum.from_timestamp(
-                int(records[-1]['updatedAt'])).to_iso8601_string()
-            write_bookmark(state, 'campaigns', max_updated_at)
-
-        if len(records) < count:
-            break
-
-def sync_emails(client, catalog, state, start_date):
-    write_schema(catalog, 'emails')
-
-    last_date_raw = get_bookmark(state, 'emails', start_date)
-    last_date = pendulum.parse(last_date_raw).to_datetime_string()
-    search = "updatedAt>='{}'".format(last_date)
-
-    page = 1
-    count = 1000
-    while True:
-        LOGGER.info('Syncing emails since {} - page {}'.format(last_date, page))
-        data = client.get(
-            '/api/REST/2.0/assets/emails',
-            params={
-                'count': count,
-                'page': page,
-                'depth': 'complete',
-                'orderBy': 'updatedAt',
-                'search': search
-            },
-            endpoint='emails')
-        page += 1
-        records = data.get('elements', [])
-
-        persist_records(catalog, 'emails', records)
-
-        if records:
-            max_updated_at = pendulum.from_timestamp(
-                int(records[-1]['updatedAt'])).to_iso8601_string()
-            write_bookmark(state, 'emails', max_updated_at)
-
-        if len(records) < count:
-            break
-
-def sync_forms(client, catalog, state, start_date):
-    write_schema(catalog, 'forms')
-
-    last_date_raw = get_bookmark(state, 'forms', start_date)
-    last_date = pendulum.parse(last_date_raw).to_datetime_string()
-    search = "updatedAt>='{}'".format(last_date)
-
-    page = 1
-    count = 1000
-    while True:
-        LOGGER.info('Syncing forms since {} - page {}'.format(last_date, page))
-        data = client.get(
-            '/api/REST/2.0/assets/forms',
-            params={
-                'count': count,
-                'page': page,
-                'depth': 'complete',
-                'orderBy': 'updatedAt',
-                'search': search
-            },
-            endpoint='forms')
-        page += 1
-        records = data.get('elements', [])
-
-        persist_records(catalog, 'forms', records)
-
-        if records:
-            max_updated_at = pendulum.from_timestamp(
-                int(records[-1]['updatedAt'])).to_iso8601_string()
-            write_bookmark(state, 'forms', max_updated_at)
-
-        if len(records) < count:
-            break
-
-def sync_assets(client, catalog, state, start_date):
-    write_schema(catalog, 'assets')
-
-    last_date_raw = get_bookmark(state, 'assets', start_date)
-    last_date = pendulum.parse(last_date_raw).to_datetime_string()
-    search = "updatedAt>='{}'".format(last_date)
-
-    page = 1
-    count = 1000
-    while True:
-        LOGGER.info('Syncing assets since {} - page {}'.format(last_date, page))
-        data = client.get(
-            '/api/REST/2.0/assets/externals',
-            params={
-                'count': count,
-                'page': page,
-                'depth': 'complete',
-                'orderBy': 'updatedAt',
-                'search': search
-            },
-            endpoint='assets')
-        page += 1
-        records = data.get('elements', [])
-
-        persist_records(catalog, 'assets', records)
-
-        if records:
-            max_updated_at = pendulum.from_timestamp(
-                int(records[-1]['updatedAt'])).to_iso8601_string()
-            write_bookmark(state, 'assets', max_updated_at)
-
-        if len(records) < count:
-            break
-
-def sync_visitors(client, catalog, state, start_date):
-    write_schema(catalog, 'visitors')
-
-    last_visit_raw = get_bookmark(state, 'visitors', start_date)
-    last_visit = pendulum.parse(last_visit_raw).to_datetime_string()
-    search = "v_LastVisitDateAndTime>='{}'".format(last_visit)
-
-    page = 1
-    count = 1000
-    while True:
-        LOGGER.info('Syncing visitors since {} - page {}'.format(last_visit, page))
-        data = client.get(
-            '/api/REST/2.0/data/visitors',
-            params={
-                'count': count,
-                'page': page,
-                'depth': 'complete',
-                'orderBy': 'v_LastVisitDateAndTime',
-                'search': search
-            },
-            endpoint='visitors')
-        page += 1
-        records = data.get('elements', [])
-
-        persist_records(catalog, 'visitors', records)
-
-        if records:
-            max_visit = pendulum.from_timestamp(
-                records[-1]['v_LastVisitDateAndTime']).to_iso8601_string()
-            write_bookmark(state, 'visitors', max_visit)
+                int(records[-1][updated_at_col])).to_iso8601_string()
+            write_bookmark(state, stream_id, max_updated_at)
 
         if len(records) < count:
             break
@@ -429,25 +293,46 @@ def sync(client, catalog, state, start_date):
                           start_date,
                           stream_name)
 
+    static_endpoints = [
+        {
+            'stream_id': 'visitors',
+            'path': 'data/visitors',
+            'updated_at_col': 'v_LastVisitDateAndTime'
+        },
+        {
+            'stream_id': 'campaigns',
+            'path': 'assets/campaigns',
+            'updated_at_col': 'updatedAt'
+        },
+        {
+            'stream_id': 'emails',
+            'path': 'assets/emails',
+            'updated_at_col': 'updatedAt'
+        },
+        {
+            'stream_id': 'forms',
+            'path': 'assets/forms',
+            'updated_at_col': 'updatedAt'
+        },
+        {
+            'stream_id': 'assets',
+            'path': 'assets/externals',
+            'updated_at_col': 'updatedAt'
+        }
+    ]
 
-    if should_sync_stream(last_stream, selected_streams, 'visitors'):
-        update_current_stream(state, 'visitors')
-        sync_visitors(client, catalog, state, start_date)
-
-    if should_sync_stream(last_stream, selected_streams, 'campaigns'):
-        update_current_stream(state, 'campaigns')
-        sync_campaigns(client, catalog, state, start_date)
-
-    if should_sync_stream(last_stream, selected_streams, 'emails'):
-        update_current_stream(state, 'emails')
-        sync_emails(client, catalog, state, start_date)
-
-    if should_sync_stream(last_stream, selected_streams, 'forms'):
-        update_current_stream(state, 'forms')
-        sync_forms(client, catalog, state, start_date)
-
-    if should_sync_stream(last_stream, selected_streams, 'assets'):
-        update_current_stream(state, 'assets')
-        sync_assets(client, catalog, state, start_date)
+    for static_endpoint in static_endpoints:
+        stream_id = static_endpoint['stream_id']
+        if should_sync_stream(last_stream, selected_streams, stream_id):
+            update_current_stream(state, stream_id)
+            path = static_endpoint['path']
+            updated_at_col = static_endpoint['updated_at_col']
+            sync_static_endpoint(client,
+                                 catalog,
+                                 state,
+                                 start_date,
+                                 stream_id,
+                                 path,
+                                 updated_at_col)
 
     update_current_stream(state, None)
