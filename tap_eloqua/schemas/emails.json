@@ -1,0 +1,180 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "currentStatus": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "permissions": {
+      "type": "string"
+    },
+    "createdBy": {
+      "type": "string"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedBy": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "accessedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "depth": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "senderName": {
+      "type": "string"
+    },
+    "senderEmail": {
+      "type": "string"
+    },
+    "replyToName": {
+      "type": "string"
+    },
+    "replyToEmail": {
+      "type": "string"
+    },
+    "bounceBackEmail": {
+      "type": "string"
+    },
+    "virtualMTAId": {
+      "type": "string"
+    },
+    "htmlContent": {
+      "type": "object",
+      "properties": {
+      }
+    },
+    "plainText": {
+      "type": "string"
+    },
+    "isPlainTextEditable": {
+      "type": "string"
+    },
+    "sendPlainTextOnly": {
+      "type": "string"
+    },
+    "isTracked": {
+      "type": "string"
+    },
+    "layout": {
+      "type": "string"
+    },
+    "style": {
+      "type": "string"
+    },
+    "forms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+        }
+      }
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+        }
+      }
+    },
+    "hyperlinks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+        }
+      }
+    },
+    "contentSections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+        }
+      }
+    },
+    "dynamicContents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+        }
+      }
+    },
+    "landingPages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+        }
+      }
+    },
+    "emailHeaderId": {
+      "type": "string"
+    },
+    "emailFooterId": {
+      "type": "string"
+    },
+    "emailGroupId": {
+      "type": "string"
+    },
+    "encodingId": {
+      "type": "string"
+    },
+    "fieldMerges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+        }
+      }
+    },
+    "archive": {
+      "type": "boolean"
+    },
+    "folderId": {
+      "type": "string"
+    },
+    "isContentProtected": {
+      "type": "boolean"
+    },
+    "isPrivate": {
+      "type": "boolean"
+    },
+    "renderMode": {
+      "type": "string"
+    }
+  }
+}

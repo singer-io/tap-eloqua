@@ -55,7 +55,10 @@ def activity_type_to_stream(activity_type):
     return 'activity_' + camel_to_snake(activity_type)
 
 PKS = {
+    'assets': ['id'],
     'campaigns': ['id'],
+    'emails': ['id'],
+    'forms': ['id'],
     'visitors': ['id']
 }
 
