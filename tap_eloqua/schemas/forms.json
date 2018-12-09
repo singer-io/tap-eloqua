@@ -68,6 +68,9 @@
           "id": {
             "type": "string"
           },
+          "altText": {
+            "type": "string"
+          },
           "createdFromContactFieldId": {
             "type": "string"
           },
@@ -86,6 +89,9 @@
           "name": {
             "type": "string"
           },
+          "optionListId": {
+            "type": "string"
+          },
           "style": {
             "type": "string"
           },
@@ -96,6 +102,24 @@
             "type": "string"
           },
           "validations": {
+            "type": "string"
+          },
+          "depth": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "string"
+          },
+          "instructions": {
+            "type": "string"
+          },
+          "numberOfFieldsToDisplay": {
+            "type": "string"
+          },
+          "onlyShowIncompleteFields": {
+            "type": "string"
+          },
+          "randomizeFields": {
             "type": "string"
           }
         }
@@ -108,6 +132,21 @@
         "additionalProperties": true,
         "properties": {
           "id": {
+            "type": "string"
+          },
+          "allowResend": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "emailAddressFormFieldId": {
+            "type": "string"
+          },
+          "emailId": {
+            "type": "string"
+          },
+          "eventId": {
             "type": "string"
           },
           "execute": {
@@ -132,6 +171,12 @@
             "type": "string"
           },
           "keyFieldMapping": {
+            "type": "string"
+          },
+          "resendLimit": {
+            "type": "integer"
+          },
+          "landingPageId": {
             "type": "string"
           }
         }
