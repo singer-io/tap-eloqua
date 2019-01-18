@@ -1,0 +1,7 @@
+{
+  "start_date": "2000-01-01T00:00:00Z",
+  "client_id": "<OAuth Client ID>",
+  "client_secret": "<OAuth Client Secret>",
+  "refresh_token": "<OAuth Refresh Token>",
+  "redirect_uri": "http://localhost:8080/callback"
+}
