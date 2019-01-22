@@ -20,8 +20,6 @@ MIN_RETRY_INTERVAL = 2 # 10 seconds
 MAX_RETRY_INTERVAL = 300 # 5 minutes
 MAX_RETRY_ELAPSED_TIME = 3600 # 1 hour
 
-LAST_STREAM = None
-
 def next_sleep_interval(previous_sleep_interval):
     min_interval = previous_sleep_interval or MIN_RETRY_INTERVAL
     max_interval = previous_sleep_interval * 2 or MIN_RETRY_INTERVAL
@@ -243,15 +241,13 @@ def update_current_stream(state, stream_name):
     state['current_stream'] = stream_name
     singer.write_state(state)
 
-def should_sync_stream(selected_streams, stream_name):
-    global LAST_STREAM
-
-    if LAST_STREAM == stream_name or LAST_STREAM is None:
-        if LAST_STREAM is not None:
-            LAST_STREAM = None
+def should_sync_stream(selected_streams, last_stream, stream_name):
+    if last_stream == stream_name or last_stream is None:
+        if last_stream is not None:
+            last_stream = None
         if stream_name in selected_streams:
-            return True
-    return False
+            return True, last_stream
+    return False, last_stream
 
 def get_custom_obj_streams(catalog):
     custom_streams = set()
@@ -263,17 +259,18 @@ def get_custom_obj_streams(catalog):
     return list(custom_streams)
 
 def sync(client, catalog, state, start_date):
-    global LAST_STREAM
-
     selected_streams = get_selected_streams(catalog)
 
     if not selected_streams:
         return
 
-    LAST_STREAM = state.get('current_stream')
+    last_stream = state.get('current_stream')
 
     for bulk_object in BUILT_IN_BULK_OBJECTS:
-        if should_sync_stream(selected_streams, bulk_object):
+        should_stream, last_stream = should_sync_stream(selected_streams,
+                                                        last_stream,
+                                                        bulk_object)
+        if should_stream:
             update_current_stream(state, bulk_object)
             sync_bulk_obj(client,
                           catalog,
@@ -283,7 +280,10 @@ def sync(client, catalog, state, start_date):
 
     for activity_type in ACTIVITY_TYPES:
         stream_name = activity_type_to_stream(activity_type)
-        if should_sync_stream(selected_streams, stream_name):
+        should_stream, last_stream = should_sync_stream(selected_streams,
+                                                        last_stream,
+                                                        stream_name)
+        if should_stream:
             update_current_stream(state, stream_name)
             sync_bulk_obj(client,
                           catalog,
@@ -293,7 +293,10 @@ def sync(client, catalog, state, start_date):
                           activity_type=activity_type)
 
     for stream_name in get_custom_obj_streams(catalog):
-        if should_sync_stream(selected_streams, stream_name):
+        should_stream, last_stream = should_sync_stream(selected_streams,
+                                                        last_stream,
+                                                        stream_name)
+        if should_stream:
             update_current_stream(state, stream_name)
             sync_bulk_obj(client,
                           catalog,
@@ -331,7 +334,10 @@ def sync(client, catalog, state, start_date):
 
     for static_endpoint in static_endpoints:
         stream_id = static_endpoint['stream_id']
-        if should_sync_stream(selected_streams, stream_id):
+        should_stream, last_stream = should_sync_stream(selected_streams,
+                                                        last_stream,
+                                                        stream_id)
+        if should_stream:
             update_current_stream(state, stream_id)
             path = static_endpoint['path']
             updated_at_col = static_endpoint['updated_at_col']
