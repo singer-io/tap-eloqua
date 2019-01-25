@@ -111,6 +111,13 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type
             field_name = meta['breadcrumb'][1]
             fields[field_name] = meta['metadata']['tap-eloqua.statement']
 
+    num_fields = len(fields.values())
+    if num_fields > 250:
+        LOGGER.error('{} - Exports can only have 250 fields selected. {} are selected.'.format(
+            stream_name, num_fields))
+    else:
+        LOGGER.info('{} - Syncing {} fields'.format(stream_name, num_fields))
+
     last_date_raw = get_bookmark(state, stream_name, start_date)
     last_date = pendulum.parse(last_date_raw).to_datetime_string()
 
@@ -308,7 +315,7 @@ def sync(client, catalog, state, start_date):
         {
             'stream_id': 'visitors',
             'path': 'data/visitors',
-            'updated_at_col': 'v_LastVisitDateAndTime'
+            'updated_at_col': 'V_LastVisitDateAndTime'
         },
         {
             'stream_id': 'campaigns',
