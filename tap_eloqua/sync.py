@@ -70,7 +70,7 @@ def stream_export(client, state, catalog, stream_name, sync_id, updated_at_field
 
     write_schema(catalog, stream_name)
 
-    limit = 50000
+    limit = 25000
     offset = 0
     has_more = True
     max_updated_at = None
