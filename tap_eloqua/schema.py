@@ -59,7 +59,7 @@ PKS = {
     'campaigns': ['id'],
     'emails': ['id'],
     'forms': ['id'],
-    'visitors': ['id']
+    'visitors': []
 }
 
 for bulk_object in BUILT_IN_BULK_OBJECTS:

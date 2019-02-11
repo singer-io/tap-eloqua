@@ -16,7 +16,7 @@ from tap_eloqua.schema import (
 
 LOGGER = singer.get_logger()
 
-MIN_RETRY_INTERVAL = 2 # 10 seconds
+MIN_RETRY_INTERVAL = 2 # 2 seconds
 MAX_RETRY_INTERVAL = 300 # 5 minutes
 MAX_RETRY_ELAPSED_TIME = 3600 # 1 hour
 
@@ -72,9 +72,13 @@ def stream_export(client, state, catalog, stream_name, sync_id, updated_at_field
 
     limit = 50000
     offset = 0
-    has_true = True
+    has_more = True
     max_updated_at = None
-    while has_true:
+    while has_more:
+        LOGGER.info('{} - Paginating export results - offset: {}, limit: {}'.format(
+            stream_name,
+            offset,
+            limit))
         data = client.get(
             '/api/bulk/2.0/syncs/{}/data'.format(sync_id),
             params={
@@ -82,7 +86,7 @@ def stream_export(client, state, catalog, stream_name, sync_id, updated_at_field
                 'offset': offset
             },
             endpoint='export_data')
-        has_true = data['hasMore']
+        has_more = data['hasMore']
         offset += limit
 
         if 'items' in data and data['items']:
@@ -172,9 +176,9 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type
                 endpoint='export_sync_poll')
 
             status = data['status']
-            if status == 'success' or status == 'active':
+            if status == 'success':
                 break
-            elif status != 'pending':
+            elif status not in ['pending', 'active']:
                 message = '{} - status: {}, exporting failed'.format(
                         stream_name,
                         status)
