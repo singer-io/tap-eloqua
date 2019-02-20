@@ -120,4 +120,5 @@ def main():
             sync(client,
                  parsed_args.catalog,
                  parsed_args.state,
-                 parsed_args.config['start_date'])
+                 parsed_args.config['start_date'],
+                 int(parsed_args.config.get('bulk_page_size', 5000)))
