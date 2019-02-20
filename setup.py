@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='tap-eloqua',
-      version='0.0.2',
+      version='0.1.4',
       description='Singer.io tap for extracting data from the Oracle Eloqua API',
       author='Stitch',
       url='https://singer.io',
@@ -20,5 +20,7 @@ setup(name='tap-eloqua',
           tap-eloqua=tap_eloqua:main
       ''',
       packages=['tap_eloqua'],
-      include_package_data=True,
+      package_data = {
+          'tap_eloqua': ['schemas/*.json'],
+      },
 )
