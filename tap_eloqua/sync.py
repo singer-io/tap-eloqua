@@ -65,12 +65,11 @@ def transform_export_row(row):
         out[field] = value
     return out
 
-def stream_export(client, state, catalog, stream_name, sync_id, updated_at_field):
+def stream_export(client, state, catalog, stream_name, sync_id, updated_at_field, bulk_page_size):
     LOGGER.info('{} - Pulling export results - {}'.format(stream_name, sync_id))
 
     write_schema(catalog, stream_name)
 
-    limit = 50000
     offset = 0
     has_more = True
     max_updated_at = None
@@ -78,16 +77,16 @@ def stream_export(client, state, catalog, stream_name, sync_id, updated_at_field
         LOGGER.info('{} - Paginating export results - offset: {}, limit: {}'.format(
             stream_name,
             offset,
-            limit))
+            bulk_page_size))
         data = client.get(
             '/api/bulk/2.0/syncs/{}/data'.format(sync_id),
             params={
-                'limit': limit,
+                'limit': bulk_page_size,
                 'offset': offset
             },
             endpoint='export_data')
         has_more = data['hasMore']
-        offset += limit
+        offset += bulk_page_size
 
         if 'items' in data and data['items']:
             records = map(transform_export_row, data['items'])
@@ -100,7 +99,7 @@ def stream_export(client, state, catalog, stream_name, sync_id, updated_at_field
     if max_updated_at:
         write_bookmark(state, stream_name, max_updated_at)
 
-def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type=None):
+def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_size, activity_type=None):
     LOGGER.info('{} - Starting export'.format(stream_name))
 
     stream = catalog.get_stream(stream_name)
@@ -203,7 +202,8 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, activity_type
                   catalog,
                   stream_name,
                   sync_id,
-                  updated_at_field)
+                  updated_at_field,
+                  bulk_page_size)
 
 def sync_static_endpoint(client, catalog, state, start_date, stream_id, path, updated_at_col):
     write_schema(catalog, stream_id)
@@ -269,7 +269,7 @@ def get_custom_obj_streams(catalog):
             custom_streams.add(stream.tap_stream_id)
     return list(custom_streams)
 
-def sync(client, catalog, state, start_date):
+def sync(client, catalog, state, start_date, bulk_page_size):
     selected_streams = get_selected_streams(catalog)
 
     if not selected_streams:
@@ -287,7 +287,8 @@ def sync(client, catalog, state, start_date):
                           catalog,
                           state,
                           start_date,
-                          bulk_object)
+                          bulk_object,
+                          bulk_page_size)
 
     for activity_type in ACTIVITY_TYPES:
         stream_name = activity_type_to_stream(activity_type)
@@ -301,6 +302,7 @@ def sync(client, catalog, state, start_date):
                           state,
                           start_date,
                           stream_name,
+                          bulk_page_size,
                           activity_type=activity_type)
 
     for stream_name in get_custom_obj_streams(catalog):
@@ -313,7 +315,8 @@ def sync(client, catalog, state, start_date):
                           catalog,
                           state,
                           start_date,
-                          stream_name)
+                          stream_name,
+                          bulk_page_size)
 
     static_endpoints = [
         {
