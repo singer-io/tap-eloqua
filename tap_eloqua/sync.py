@@ -113,7 +113,7 @@ def stream_export(client, state, catalog, stream_name, sync_id, updated_at_field
                 max_updated_at = max_page_updated_at
 
             if count < bulk_page_size:
-                break
+                has_more = False
 
     if max_updated_at:
         write_bookmark(state, stream_name, max_updated_at)
