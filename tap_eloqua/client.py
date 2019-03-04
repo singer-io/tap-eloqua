@@ -88,7 +88,7 @@ class EloquaClient(object):
                           Server5xxError,
                           max_tries=5,
                           factor=2)
-    def request(self, method, path=None, url=None, **kwargs):
+    def request(self, method, path=None, url=None, stream_csv=False, **kwargs):
         self.get_access_token()
 
         if not url and self.__base_url is None:
@@ -110,6 +110,10 @@ class EloquaClient(object):
         if self.__user_agent:
             kwargs['headers']['User-Agent'] = self.__user_agent
 
+        if stream_csv:
+            kwargs['stream'] = True
+            kwargs['headers']['Accept'] = 'text/csv'
+
         with metrics.http_request_timer(endpoint) as timer:
             response = self.__session.request(method, url, **kwargs)
             timer.tags[metrics.Tag.http_status_code] = response.status_code
@@ -119,6 +123,8 @@ class EloquaClient(object):
 
         response.raise_for_status()
 
+        if stream_csv:
+            return response
         return response.json()
 
     def get(self, path, **kwargs):
