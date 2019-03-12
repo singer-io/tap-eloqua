@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 import backoff
 import requests
+from requests.exceptions import ConnectionError
 from singer import metrics
 
 class Server5xxError(Exception):
@@ -85,7 +86,7 @@ class EloquaClient(object):
         self.__base_url = data['urls']['base']
 
     @backoff.on_exception(backoff.expo,
-                          Server5xxError,
+                          (Server5xxError, ConnectionError),
                           max_tries=5,
                           factor=2)
     def request(self, method, path=None, url=None, **kwargs):
