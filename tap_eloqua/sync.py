@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import pendulum
 import singer
 from singer import metrics, metadata, Transformer, UNIX_SECONDS_INTEGER_DATETIME_PARSING
+from requests.exceptions import HTTPError
 
 from tap_eloqua.schema import (
     BUILT_IN_BULK_OBJECTS,
@@ -38,6 +39,16 @@ def write_bookmark(state, stream, value):
     state['bookmarks'][stream] = value
     singer.write_state(state)
 
+def write_bulk_bookmark(state, stream_name, sync_id, offset, max_updated_at):
+    if 'bookmarks' not in state:
+        state['bookmarks'] = {}
+    state['bookmarks'][stream_name] = {
+        'sync_id': sync_id,
+        'offset': offset,
+        'datetime': max_updated_at
+    }
+    singer.write_state(state)
+
 def write_schema(catalog, stream_id):
     stream = catalog.get_stream(stream_id)
     schema = stream.schema.to_dict()
@@ -65,12 +76,19 @@ def transform_export_row(row):
         out[field] = value
     return out
 
-def stream_export(client, state, catalog, stream_name, sync_id, updated_at_field, bulk_page_size):
+def stream_export(client,
+                  state,
+                  catalog,
+                  stream_name,
+                  sync_id,
+                  updated_at_field,
+                  bulk_page_size,
+                  bookmark_datetime,
+                  offset=0):
     LOGGER.info('{} - Pulling export results - {}'.format(stream_name, sync_id))
 
     write_schema(catalog, stream_name)
 
-    offset = 0
     has_more = True
     max_updated_at = None
     while has_more:
@@ -78,6 +96,9 @@ def stream_export(client, state, catalog, stream_name, sync_id, updated_at_field
             stream_name,
             offset,
             bulk_page_size))
+
+        write_bulk_bookmark(state, stream_name, sync_id, offset, bookmark_datetime)
+
         data = client.get(
             '/api/bulk/2.0/syncs/{}/data'.format(sync_id),
             params={
@@ -96,13 +117,43 @@ def stream_export(client, state, catalog, stream_name, sync_id, updated_at_field
             if max_updated_at is None or max_page_updated_at > max_updated_at:
                 max_updated_at = max_page_updated_at
 
-    if max_updated_at:
-        write_bookmark(state, stream_name, max_updated_at)
+    final_datetime = max_updated_at or bookmark_datetime
+    write_bulk_bookmark(state, stream_name, None, None, final_datetime)
+
+    return final_datetime
 
 def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_size, activity_type=None):
     LOGGER.info('{} - Starting export'.format(stream_name))
 
     stream = catalog.get_stream(stream_name)
+    if activity_type:
+        updated_at_field = 'CreatedAt'
+    else:
+        updated_at_field = 'UpdatedAt'
+
+    last_bookmark = get_bookmark(state, stream_name, {})
+    last_date_raw = last_bookmark.get('datetime', start_date)
+    last_date = pendulum.parse(last_date_raw).to_datetime_string()
+    last_sync_id = last_bookmark.get('sync_id')
+    last_offset = last_bookmark.get('offset')
+
+    if last_sync_id:
+        LOGGER.info('{} - Resuming previous export: {}'.format(stream_name, last_sync_id))
+        try:
+            last_date = stream_export(client,
+                                      state,
+                                      catalog,
+                                      stream_name,
+                                      last_sync_id,
+                                      updated_at_field,
+                                      bulk_page_size,
+                                      last_date,
+                                      offset=last_offset)
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                LOGGER.info('{} - Previous export expired: {}'.format(stream_name, last_sync_id))
+            else:
+                raise
 
     fields = {}
     obj_meta = None
@@ -121,15 +172,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
     else:
         LOGGER.info('{} - Syncing {} fields'.format(stream_name, num_fields))
 
-    last_date_raw = get_bookmark(state, stream_name, start_date)
-    last_date = pendulum.parse(last_date_raw).to_datetime_string()
-
     language_obj = obj_meta['tap-eloqua.query-language-name']
-
-    if activity_type:
-        updated_at_field = 'CreatedAt'
-    else:
-        updated_at_field = 'UpdatedAt'
 
     _filter = "'{{" + language_obj + "." + updated_at_field + "}}' >= '" + last_date + "'"
 
@@ -203,7 +246,8 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
                   stream_name,
                   sync_id,
                   updated_at_field,
-                  bulk_page_size)
+                  bulk_page_size,
+                  last_date)
 
 def sync_static_endpoint(client, catalog, state, start_date, stream_id, path, updated_at_col):
     write_schema(catalog, stream_id)
