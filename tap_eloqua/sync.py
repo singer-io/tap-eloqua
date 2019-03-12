@@ -1,5 +1,4 @@
 import re
-import csv
 import time
 import random
 from datetime import datetime, timedelta
@@ -44,28 +43,19 @@ def write_schema(catalog, stream_id):
     schema = stream.schema.to_dict()
     singer.write_schema(stream_id, schema, stream.key_properties)
 
-def persist_records(catalog, stream_id, records, updated_at_field=None):
+def persist_records(catalog, stream_id, records):
     stream = catalog.get_stream(stream_id)
     schema = stream.schema.to_dict()
     stream_metadata = metadata.to_map(stream.metadata)
-    max_updated_at = None
     with metrics.record_counter(stream_id) as counter:
-        total_count = 0
         for record in records:
             with Transformer(
                 integer_datetime_fmt=UNIX_SECONDS_INTEGER_DATETIME_PARSING) as transformer:
                 record = transformer.transform(record,
                                                schema,
                                                stream_metadata)
-                if updated_at_field:
-                    updated_at_value = record[updated_at_field]
-                    if max_updated_at is None or updated_at_value > max_updated_at:
-                        max_updated_at = updated_at_value
-
             singer.write_record(stream_id, record)
             counter.increment()
-            total_count += 1
-        return total_count, max_updated_at
 
 def transform_export_row(row):
     out = {}
@@ -88,32 +78,23 @@ def stream_export(client, state, catalog, stream_name, sync_id, updated_at_field
             stream_name,
             offset,
             bulk_page_size))
-        with metrics.job_timer('export_page'):
-            stream = client.get(
-                '/api/bulk/2.0/syncs/{}/data'.format(sync_id),
-                params={
-                    'limit': bulk_page_size,
-                    'offset': offset
-                },
-                stream_csv=True,
-                endpoint='export_data')
-            offset += bulk_page_size
+        data = client.get(
+            '/api/bulk/2.0/syncs/{}/data'.format(sync_id),
+            params={
+                'limit': bulk_page_size,
+                'offset': offset
+            },
+            endpoint='export_data')
+        has_more = data['hasMore']
+        offset += bulk_page_size
 
-            records_stream = (line.decode('utf-8') for line in stream.iter_lines())
-            records = csv.DictReader(records_stream)
-            records_transformed = map(transform_export_row, records)
+        if 'items' in data and data['items']:
+            records = map(transform_export_row, data['items'])
+            persist_records(catalog, stream_name, records)
 
-            count, max_page_updated_at = persist_records(
-                catalog,
-                stream_name,
-                records_transformed,
-                updated_at_field=updated_at_field)
-
+            max_page_updated_at = max(map(lambda x: x[updated_at_field], data['items']))
             if max_updated_at is None or max_page_updated_at > max_updated_at:
                 max_updated_at = max_page_updated_at
-
-            if count < bulk_page_size:
-                has_more = False
 
     if max_updated_at:
         write_bookmark(state, stream_name, max_updated_at)
