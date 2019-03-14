@@ -33,6 +33,14 @@ def get_bookmark(state, stream, default):
         .get(stream, default)
     )
 
+def get_bulk_bookmark(state, stream):
+    bookmark = get_bookmark(state, stream, {})
+    if isinstance(bookmark, str):
+        return {
+            'datetime': bookmark
+        }
+    return bookmark
+
 def write_bookmark(state, stream, value):
     if 'bookmarks' not in state:
         state['bookmarks'] = {}
@@ -131,7 +139,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
     else:
         updated_at_field = 'UpdatedAt'
 
-    last_bookmark = get_bookmark(state, stream_name, {})
+    last_bookmark = get_bulk_bookmark(state, stream_name)
     last_date_raw = last_bookmark.get('datetime', start_date)
     last_date = pendulum.parse(last_date_raw).to_datetime_string()
     last_sync_id = last_bookmark.get('sync_id')
@@ -150,7 +158,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
                                       last_date,
                                       offset=last_offset)
         except HTTPError as e:
-            if e.response.status_code == 404:
+            if e.response.status_code in [404, 410]:
                 LOGGER.info('{} - Previous export expired: {}'.format(stream_name, last_sync_id))
             else:
                 raise
