@@ -66,7 +66,7 @@ for bulk_object in BUILT_IN_BULK_OBJECTS:
     PKS[bulk_object] = ['Id']
 
 for activity_type in ACTIVITY_TYPES:
-    PKS[activity_type_to_stream(activity_type)] = ['Id']
+    PKS[activity_type_to_stream(activity_type)] = []
 
 def get_pk(stream_name):
     if stream_name in PKS:
