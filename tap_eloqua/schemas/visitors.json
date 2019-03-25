@@ -22,7 +22,7 @@
       "format": "date-time"
     },
     "id":{
-      "type":"integer"
+      "type": "string"
     },
     "V_Browser_Type": {
       "type": "string"

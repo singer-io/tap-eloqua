@@ -31,7 +31,7 @@ QUERY_LANGUAGE_MAP = {
 
 BASE_SYSTEM_FIELD = {
     'Id': {
-        'type': 'integer'
+        'type': 'string'
     },
     'CreatedAt': {
         'type': 'string',
