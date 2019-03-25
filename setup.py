@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='tap-eloqua',
-      version='0.5.0',
+      version='0.6.0',
       description='Singer.io tap for extracting data from the Oracle Eloqua API',
       author='Stitch',
       url='https://singer.io',
