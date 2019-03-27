@@ -39,6 +39,16 @@ BASE_SYSTEM_FIELD = {
     }
 }
 
+ACTIVITY_BASE_SYSTEM_FIELD = {
+    **BASE_SYSTEM_FIELD,
+    'Id': {
+        'type': [
+            'null',
+            'string'
+        ]
+    }
+}
+
 BULK_SYSTEM_FIELDS = {
     **BASE_SYSTEM_FIELD,
     'UpdatedAt': {
@@ -251,7 +261,7 @@ def get_schemas(client):
         json_schema, metadata = get_bulk_obj_schema(client,
                                                     stream_name,
                                                     'activities',
-                                                    BASE_SYSTEM_FIELD,
+                                                    ACTIVITY_BASE_SYSTEM_FIELD,
                                                     activity_type=activity_type)
         SCHEMAS[stream_name] = json_schema
         FIELD_METADATA[stream_name] = metadata
