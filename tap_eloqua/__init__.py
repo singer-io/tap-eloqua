@@ -121,4 +121,4 @@ def main():
                  parsed_args.catalog,
                  parsed_args.state,
                  parsed_args.config['start_date'],
-                 int(parsed_args.config.get('bulk_page_size', 5000)))
+                 int(parsed_args.config.get('bulk_page_size', 50000)))
