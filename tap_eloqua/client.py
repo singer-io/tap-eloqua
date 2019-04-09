@@ -111,6 +111,9 @@ class EloquaClient(object):
         if self.__user_agent:
             kwargs['headers']['User-Agent'] = self.__user_agent
 
+        if method == 'POST':
+            kwargs['headers']['Content-Type'] = 'application/json'
+
         with metrics.http_request_timer(endpoint) as timer:
             response = self.__session.request(method, url, **kwargs)
             timer.tags[metrics.Tag.http_status_code] = response.status_code
