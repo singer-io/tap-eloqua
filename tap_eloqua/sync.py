@@ -175,7 +175,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
 
     num_fields = len(fields.values())
     if num_fields > 250:
-        LOGGER.error('{} - Exports can only have 250 fields selected. {} are selected.'.format(
+        raise Exception('{} - Exports can only have 250 fields selected. {} are selected.'.format(
             stream_name, num_fields))
     else:
         LOGGER.info('{} - Syncing {} fields'.format(stream_name, num_fields))
