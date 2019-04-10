@@ -208,6 +208,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
             json=params,
             endpoint='export_create_def')
 
+        time.sleep(30)
         data = client.post(
             '/api/bulk/2.0/syncs',
             json={
@@ -215,6 +216,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
             },
             endpoint='export_create_sync')
 
+        time.sleep(30)
         sync_id = re.match(r'/syncs/([0-9]+)', data['uri']).groups()[0]
 
         LOGGER.info('{} - Created export - {}'.format(stream_name, sync_id))
@@ -249,6 +251,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
                         sleep))
             time.sleep(sleep)
 
+    time.sleep(30)
     stream_export(client,
                   state,
                   catalog,
