@@ -62,12 +62,15 @@ def write_schema(catalog, stream_id):
     schema = stream.schema.to_dict()
     singer.write_schema(stream_id, schema, stream.key_properties)
 
-def persist_records(catalog, stream_id, records):
+def persist_records(catalog, stream_id, records, activity_type=None):
     stream = catalog.get_stream(stream_id)
     schema = stream.schema.to_dict()
     stream_metadata = metadata.to_map(stream.metadata)
     with metrics.record_counter(stream_id) as counter:
         for record in records:
+            if activity_type is not None:
+                # NB: Synthesize CreatedAt here as a workaround to fix activity exports
+                record['CreatedAt'] = record['ActivityDate']
             with Transformer(
                 integer_datetime_fmt=UNIX_SECONDS_INTEGER_DATETIME_PARSING) as transformer:
                 record = transformer.transform(record,
@@ -92,7 +95,8 @@ def stream_export(client,
                   updated_at_field,
                   bulk_page_size,
                   bookmark_datetime,
-                  offset=0):
+                  offset=0,
+                  activity_type=None):
     LOGGER.info('{} - Pulling export results - {}'.format(stream_name, sync_id))
 
     write_schema(catalog, stream_name)
@@ -119,7 +123,7 @@ def stream_export(client,
 
         if 'items' in data and data['items']:
             records = map(transform_export_row, data['items'])
-            persist_records(catalog, stream_name, records)
+            persist_records(catalog, stream_name, records, activity_type=activity_type)
 
             max_page_updated_at = max(map(lambda x: x[updated_at_field], data['items']))
             if max_updated_at is None or max_page_updated_at > max_updated_at:
@@ -135,9 +139,11 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
 
     stream = catalog.get_stream(stream_name)
     if activity_type:
+        updated_at_field_name = 'ActivityDate'
         updated_at_field = 'CreatedAt'
     else:
         updated_at_field = 'UpdatedAt'
+        updated_at_field_name = updated_at_field
 
     last_bookmark = get_bulk_bookmark(state, stream_name)
     last_date_raw = last_bookmark.get('datetime', start_date)
@@ -153,7 +159,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
                                       catalog,
                                       stream_name,
                                       last_sync_id,
-                                      updated_at_field,
+                                      updated_at_field_name,
                                       bulk_page_size,
                                       last_date,
                                       offset=last_offset)
@@ -186,6 +192,9 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
 
     if activity_type is not None:
         _filter += " AND '{{Activity.Type}}' = '" + activity_type + "'"
+        # NB: We observed shuffled data when Activity.CreatedAt was specified twice in the query.
+        #     The key 'CreatedAt' is synthetic, so add it in after the export.
+        fields.pop('CreatedAt', None)
 
     params = {
         'name': 'Singer Sync - ' + datetime.utcnow().isoformat(),
@@ -208,7 +217,6 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
             json=params,
             endpoint='export_create_def')
 
-        time.sleep(30)
         data = client.post(
             '/api/bulk/2.0/syncs',
             json={
@@ -216,7 +224,6 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
             },
             endpoint='export_create_sync')
 
-        time.sleep(30)
         sync_id = re.match(r'/syncs/([0-9]+)', data['uri']).groups()[0]
 
         LOGGER.info('{} - Created export - {}'.format(stream_name, sync_id))
@@ -251,15 +258,15 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
                         sleep))
             time.sleep(sleep)
 
-    time.sleep(30)
     stream_export(client,
                   state,
                   catalog,
                   stream_name,
                   sync_id,
-                  updated_at_field,
+                  updated_at_field_name,
                   bulk_page_size,
-                  last_date)
+                  last_date,
+                  activity_type=activity_type)
 
 def sync_static_endpoint(client, catalog, state, start_date, stream_id, path, updated_at_col):
     write_schema(catalog, stream_id)
