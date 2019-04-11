@@ -69,7 +69,7 @@ def persist_records(catalog, stream_id, records, activity_type=None):
     with metrics.record_counter(stream_id) as counter:
         for record in records:
             if activity_type is not None:
-                # NB: Synthesize CreatedAt here as a workaround to fix activity exports
+                # NB: Synthesize CreatedAt here as a workaround to fix activity exports (PR #19)
                 record['CreatedAt'] = record['ActivityDate']
             with Transformer(
                 integer_datetime_fmt=UNIX_SECONDS_INTEGER_DATETIME_PARSING) as transformer:
@@ -193,7 +193,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
     if activity_type is not None:
         _filter += " AND '{{Activity.Type}}' = '" + activity_type + "'"
         # NB: We observed shuffled data when Activity.CreatedAt was specified twice in the query.
-        #     The key 'CreatedAt' is synthetic, so add it in after the export.
+        #     The key 'CreatedAt' is synthetic, so add it in after the export. (PR #19)
         fields.pop('CreatedAt', None)
 
     params = {
