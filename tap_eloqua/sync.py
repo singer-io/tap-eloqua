@@ -289,15 +289,15 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
 
     validate_activity_export_size(client, sync_id)
 
-   stream_export(client,
-                 state,
-                 catalog,
-                 stream_name,
-                 sync_id,
-                 updated_at_field_name,
-                 bulk_page_size,
-                 last_date,
-                 activity_type=activity_type)
+    stream_export(client,
+                  state,
+                  catalog,
+                  stream_name,
+                  sync_id,
+                  updated_at_field_name,
+                  bulk_page_size,
+                  last_date,
+                  activity_type=activity_type)
 
 def sync_static_endpoint(client, catalog, state, start_date, stream_id, path, updated_at_col):
     write_schema(catalog, stream_id)
