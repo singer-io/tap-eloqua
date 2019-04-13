@@ -144,19 +144,6 @@ class ActivityExportTooLarge(Exception):
     """
     pass
 
-def validate_activity_export_size(client, sync_id):
-    data = client.get(
-        '/api/bulk/2.0/syncs/{}/logs'.format(sync_id),
-        endpoint='export_sync_poll')
-
-    export_success_logs = [i for i in data.get("items", [])
-                           if i.get("message") == "Successfully exported members to csv file."]
-    if len(export_success_logs) == 1:
-        activity_count = export_success_logs[0]["count"]
-        LOGGER.info("Sync id {} contains {} activities.".format(sync_id, activity_count))
-        if activity_count >= 5000000:
-            raise ActivityExportTooLarge("Export too large, retrying with smaller window.")
-
 def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_size, activity_type=None, end_date=None):
     LOGGER.info('{} - Starting export'.format(stream_name))
 
@@ -238,9 +225,12 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
         url_obj = stream_name
 
     with metrics.job_timer('bulk_export'):
-        LOGGER.info("{} - Creating bulk export from {} to {}".format(stream_name,
-                                                                    last_date,
-                                                                    end_date.to_datetime_string()))
+        log_string = "{} - Creating bulk export from {}".format(stream_name,
+                                                                last_date)
+        if end_date:
+            log_string += " to {}".format(end_date.to_datetime_string())
+        LOGGER.info(log_string)
+
         data = client.post(
             '/api/bulk/2.0/{}/exports'.format(url_obj),
             json=params,
@@ -287,7 +277,19 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
                         sleep))
             time.sleep(sleep)
 
-    validate_activity_export_size(client, sync_id)
+    # Check record count
+    data = client.get(
+        '/api/bulk/2.0/syncs/{}/logs'.format(sync_id),
+        endpoint='export_sync_poll')
+
+    success_message = "Successfully exported members to csv file."
+    export_success_log = next((i for i in data.get("items", [])
+                               if i.get("message") == success_message), None)
+    if export_success_log:
+        record_count = export_success_log["count"]
+        LOGGER.info("Sync id {} contains {} records.".format(sync_id, record_count))
+        if activity_type and record_count >= 5000000:
+            raise ActivityExportTooLarge("Export too large, retrying with smaller window.")
 
     stream_export(client,
                   state,
