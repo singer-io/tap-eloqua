@@ -134,7 +134,17 @@ def stream_export(client,
 
     return final_datetime
 
-def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_size, activity_type=None):
+class ActivityExportTooLarge(Exception):
+    """
+    An Eloqua Bulk Activity export can have a maximum of 5 million rows in it.
+
+    Because rows in these exports are not ordered, an export that has 5 million
+    records in it is an error, and the date window must be cut in half until it
+    fits into a single export.
+    """
+    pass
+
+def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_size, activity_type=None, end_date=None):
     LOGGER.info('{} - Starting export'.format(stream_name))
 
     stream = catalog.get_stream(stream_name)
@@ -190,6 +200,9 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
 
     _filter = "'{{" + language_obj + "." + updated_at_field + "}}' >= '" + last_date + "'"
 
+    if end_date:
+        _filter += " AND '{{" + language_obj + "." + updated_at_field + "}}' < '" + end_date.to_datetime_string() + "'"
+
     if activity_type is not None:
         _filter += " AND '{{Activity.Type}}' = '" + activity_type + "'"
         # NB: We observed shuffled data when Activity.CreatedAt was specified twice in the query.
@@ -212,6 +225,12 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
         url_obj = stream_name
 
     with metrics.job_timer('bulk_export'):
+        log_string = "{} - Creating bulk export from {}".format(stream_name,
+                                                                last_date)
+        if end_date:
+            log_string += " to {}".format(end_date.to_datetime_string())
+        LOGGER.info(log_string)
+
         data = client.post(
             '/api/bulk/2.0/{}/exports'.format(url_obj),
             json=params,
@@ -257,6 +276,20 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
                         status,
                         sleep))
             time.sleep(sleep)
+
+    # Check record count
+    data = client.get(
+        '/api/bulk/2.0/syncs/{}/logs'.format(sync_id),
+        endpoint='export_sync_poll')
+
+    success_message = "Successfully exported members to csv file."
+    export_success_log = next((i for i in data.get("items", [])
+                               if i.get("message") == success_message), None)
+    if export_success_log:
+        record_count = export_success_log["count"]
+        LOGGER.info("Sync id {} contains {} records.".format(sync_id, record_count))
+        if activity_type and record_count >= 5000000:
+            raise ActivityExportTooLarge("Export too large, retrying with smaller window.")
 
     stream_export(client,
                   state,
@@ -332,6 +365,33 @@ def get_custom_obj_streams(catalog):
             custom_streams.add(stream.tap_stream_id)
     return list(custom_streams)
 
+def sync_activity_stream(client,
+                         stream_name,
+                         state,
+                         catalog,
+                         start_date,
+                         bulk_page_size,
+                         activity_type):
+    finished = False
+    end_date = pendulum.now('UTC')
+    last_date_raw = get_bulk_bookmark(state, stream_name).get('datetime', start_date)
+    last_date = pendulum.parse(last_date_raw)
+    while not finished:
+        try:
+            update_current_stream(state, stream_name)
+            sync_bulk_obj(client,
+                          catalog,
+                          state,
+                          start_date,
+                          stream_name,
+                          bulk_page_size,
+                          activity_type=activity_type,
+                          end_date=end_date)
+            finished = True
+        except ActivityExportTooLarge as ex:
+            LOGGER.warn(ex)
+            end_date = last_date.add(seconds=(end_date - last_date).total_seconds() / 2)
+
 def sync(client, catalog, state, start_date, bulk_page_size):
     selected_streams = get_selected_streams(catalog)
 
@@ -359,14 +419,13 @@ def sync(client, catalog, state, start_date, bulk_page_size):
                                                         last_stream,
                                                         stream_name)
         if should_stream:
-            update_current_stream(state, stream_name)
-            sync_bulk_obj(client,
-                          catalog,
-                          state,
-                          start_date,
-                          stream_name,
-                          bulk_page_size,
-                          activity_type=activity_type)
+            sync_activity_stream(client,
+                                 stream_name,
+                                 state,
+                                 catalog,
+                                 start_date,
+                                 bulk_page_size,
+                                 activity_type)
 
     for stream_name in get_custom_obj_streams(catalog):
         should_stream, last_stream = should_sync_stream(selected_streams,
