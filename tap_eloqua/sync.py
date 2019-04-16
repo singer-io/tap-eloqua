@@ -373,11 +373,14 @@ def sync_activity_stream(client,
                          bulk_page_size,
                          activity_type):
     finished = False
-    end_date = pendulum.now('UTC')
-    last_date_raw = get_bulk_bookmark(state, stream_name).get('datetime', start_date)
-    last_date = pendulum.parse(last_date_raw)
+    sync_start = pendulum.now('UTC')
+    end_date = sync_start
     while not finished:
         try:
+            # Get latest bookmark to adjust time window from, if needed
+            last_date_raw = get_bulk_bookmark(state, stream_name).get('datetime', start_date)
+            last_date = pendulum.parse(last_date_raw)
+
             update_current_stream(state, stream_name)
             sync_bulk_obj(client,
                           catalog,
@@ -387,10 +390,16 @@ def sync_activity_stream(client,
                           bulk_page_size,
                           activity_type=activity_type,
                           end_date=end_date)
-            finished = True
+            if end_date >= sync_start:
+                finished = True
+            else:
+                # If not done, sync again to now()
+                end_date = sync_start
         except ActivityExportTooLarge as ex:
             LOGGER.warn(ex)
             end_date = last_date.add(seconds=(end_date - last_date).total_seconds() / 2)
+            if end_date > sync_start:
+                end_date = sync_start
 
 def sync(client, catalog, state, start_date, bulk_page_size):
     selected_streams = get_selected_streams(catalog)
