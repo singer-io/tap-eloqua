@@ -151,6 +151,8 @@ def get_bulk_schema(client,
 
         if prop in pk:
             inclusion = 'automatic'
+        elif prop in system_fields:
+            inclusion = 'automatic'
         else:
             inclusion = 'available'
 
