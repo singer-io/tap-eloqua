@@ -15,6 +15,11 @@ setup(name='tap-eloqua',
           'pendulum==2.0.3',
           'singer-python==5.2.0'
       ],
+      extras_require={
+          'dev': [
+              'ipdb==0.11'
+          ]
+      },
       entry_points='''
           [console_scripts]
           tap-eloqua=tap_eloqua:main

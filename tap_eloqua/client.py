@@ -62,7 +62,12 @@ class EloquaClient(object):
             raise Server5xxError()
 
         if response.status_code != 200:
-            raise Exception('Unable to authenticate')
+            eloqua_response = response.json()
+            eloqua_response.update(
+                {'status': response.status_code})
+            raise Exception(
+                'Unable to authenticate (Eloqua response: `{}`)'.format(
+                    eloqua_response))
 
         data = response.json()
 
