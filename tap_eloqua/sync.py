@@ -214,6 +214,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
         'fields': fields,
         'filter': _filter,
         'areSystemTimestampsInUTC': True,
+        'autoDeleteDuration': 'P3D',
         'dataRetentionDuration': 'P3D' # 3 days in ISO-8601 duration notation this can be increased up to 14 days
     }
 
