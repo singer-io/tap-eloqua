@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] 2020-09-30
+### Added
+- Increase bulk sync job timeout to 3 hours [#32](https://github.com/singer-io/tap-eloqua/pull/32)
+
 ## [1.1.0] 2020-06-12
 ### Added
 - `autoDeleteDuration` parameter to the `POST /api/bulk/2.0/<object>/exports` endpoint to
