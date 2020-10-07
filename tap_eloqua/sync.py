@@ -19,7 +19,7 @@ LOGGER = singer.get_logger()
 
 MIN_RETRY_INTERVAL = 2 # 2 seconds
 MAX_RETRY_INTERVAL = 300 # 5 minutes
-MAX_RETRY_ELAPSED_TIME = 10800 # 3 hours
+MAX_RETRY_ELAPSED_TIME = 21600 # 6 hours
 
 def next_sleep_interval(previous_sleep_interval):
     min_interval = previous_sleep_interval or MIN_RETRY_INTERVAL
