@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] 2020-10-07
+### Added
+- Increase bulk sync job timeout to 6 hours [#33](https://github.com/singer-io/tap-eloqua/pull/33)
+
 ## [1.2.0] 2020-09-30
 ### Added
 - Increase bulk sync job timeout to 3 hours [#32](https://github.com/singer-io/tap-eloqua/pull/32)
