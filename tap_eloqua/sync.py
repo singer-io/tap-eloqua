@@ -248,6 +248,8 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
 
         LOGGER.info('{} - Created export - {}'.format(stream_name, sync_id))
 
+        write_bulk_bookmark(state, stream_name, sync_id, 0, last_date_raw)
+
         sleep = 0
         start_time = time.time()
         while True:
