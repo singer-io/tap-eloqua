@@ -1,9 +1,7 @@
 # Changelog
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
+## [1.2.2] 2020-11-04
+- Save bullk bookmark immediately after `sync_id` is retrieved [#34](https://github.com/singer-io/tap-eloqua/pull/34)
 
 ## [1.2.1] 2020-10-07
 ### Added
@@ -22,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No change: Releasing from Beta --> GA
 
 
-[Unreleased]: https://github.com/singer-io/tap-eloqua/compare/v1.1.0...HEAD
+[1.2.2]: https://github.com/singer-io/tap-eloqua/compare/v1.2.1...v1.2.2
+[1.2.1]: https://github.com/singer-io/tap-eloqua/compare/v1.2.0...v1.2.1
+[1.2.0]: https://github.com/singer-io/tap-eloqua/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/singer-io/tap-eloqua/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/singer-io/tap-eloqua/compare/v0.6.6...v1.0.0
