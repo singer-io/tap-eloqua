@@ -477,7 +477,12 @@ def sync(client, catalog, state, start_date, bulk_page_size):
             'stream_id': 'assets',
             'path': 'assets/externals',
             'updated_at_col': 'updatedAt'
-        }
+        },
+        {
+            'stream_id': 'emailGroups',
+            'path': 'assets/email/groups',
+            'updated_at_col': 'updatedAt'
+        }        
     ]
 
     for static_endpoint in static_endpoints:
