@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.3.0] 2021-03-19
+- Adds email groups and contact object [#38](https://github.com/singer-io/tap-eloqua/pull/38)
+
 ## [1.2.2] 2020-11-04
 - Save bullk bookmark immediately after `sync_id` is retrieved [#34](https://github.com/singer-io/tap-eloqua/pull/34)
 
