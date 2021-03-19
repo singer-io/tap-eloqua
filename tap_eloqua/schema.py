@@ -57,6 +57,38 @@ BULK_SYSTEM_FIELDS = {
     }
 }
 
+CONTACT_ADDITIONAL_FIELDS = {
+    'IsBounceback': {
+        'statement':'{{Contact.Email.IsBounced}}',
+        'type': [
+            'null',
+            'string'
+        ]
+    },
+    'IsSubscribed': {
+        'statement':'{{Contact.Email.IsSubscribed}}',
+        'type': [
+            'null',
+            'string'
+        ]
+    },
+    'EmailFormat': {
+        'statement':'{{Contact.Email.Format}}',
+        'type': [
+            'null',
+            'string'
+        ]
+    },          
+    'AccountName': {
+        'statement':'{{Contact.Account.Field(M_CompanyName)}}',
+        'type': [
+            'null',
+            'string'
+        ]
+    }              
+}
+ 
+
 def camel_to_snake(name):
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
@@ -69,7 +101,8 @@ PKS = {
     'campaigns': ['id'],
     'emails': ['id'],
     'forms': ['id'],
-    'visitors': []
+    'visitors': [],
+    'emailGroups': ['id']
 }
 
 for bulk_object in BUILT_IN_BULK_OBJECTS:
@@ -102,6 +135,7 @@ def get_type(eloqua_field):
     return ['null', json_type], json_format
 
 def to_meta(inclusion, statement, field_name):
+
     return {
         'metadata': {
             'inclusion': inclusion,
@@ -151,18 +185,21 @@ def get_bulk_schema(client,
 
         if prop in pk:
             inclusion = 'automatic'
-        elif prop in system_fields:
+        elif prop in system_fields and prop not in CONTACT_ADDITIONAL_FIELDS:
             inclusion = 'automatic'
         else:
             inclusion = 'available'
 
-        statement = (
-            '{{' +
-            query_language_name +
-            '.' +
-            prop +
-            '}}'
-        )
+        if 'statement' in json_schema.keys():
+            statement = json_schema['statement']
+        else:
+            statement = (
+                '{{' +
+                query_language_name +
+                '.' +
+                prop +
+                '}}'
+            )
 
         meta = to_meta(inclusion, statement, prop)
         metadata.append(meta)
@@ -251,10 +288,14 @@ def get_schemas(client):
     FIELD_METADATA = {}
 
     for bulk_object in BUILT_IN_BULK_OBJECTS:
+        system_fields = BULK_SYSTEM_FIELDS
+        if bulk_object == 'contacts':
+            system_fields.update(CONTACT_ADDITIONAL_FIELDS)
+        
         json_schema, metadata = get_bulk_obj_schema(client,
                                                     bulk_object,
                                                     bulk_object,
-                                                    BULK_SYSTEM_FIELDS)
+                                                    system_fields)
         SCHEMAS[bulk_object] = json_schema
         FIELD_METADATA[bulk_object] = metadata
 
