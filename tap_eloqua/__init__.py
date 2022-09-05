@@ -51,6 +51,8 @@ def parse_args(required_config_keys):
     -d,--discover   Run in discover mode
     -p,--properties Properties file: DEPRECATED, please use --catalog instead
     --catalog       Catalog file
+    -dev, --dev     Runs the tap in dev mode
+
 
     Returns the parsed args object from argparse. For each argument that
     point to JSON files (config, state, properties), we will automatically
@@ -80,6 +82,11 @@ def parse_args(required_config_keys):
         action='store_true',
         help='Do schema discovery')
 
+    parser.add_argument(
+        '-dev', '--dev',
+        action='store_true',
+        help='Runs tap in dev mode')
+
     args = parser.parse_args()
     if args.config:
         setattr(args, 'config_path', args.config)
@@ -106,13 +113,16 @@ def parse_args(required_config_keys):
 def main():
     #parsed_args = singer.utils.parse_args(REQUIRED_CONFIG_KEYS)
     parsed_args = parse_args(REQUIRED_CONFIG_KEYS)
-
+    if parsed_args.dev:
+        LOGGER.warning("Executing Tap in Dev mode",)    
     with EloquaClient(parsed_args.config_path,
                       parsed_args.config['client_id'],
                       parsed_args.config['client_secret'],
                       parsed_args.config['refresh_token'],
                       parsed_args.config['redirect_uri'],
-                      parsed_args.config.get('user_agent')) as client:
+                      parsed_args.config.get('user_agent'),
+                      parsed_args.dev
+                      ) as client:
 
         if parsed_args.discover:
             do_discover(client)
