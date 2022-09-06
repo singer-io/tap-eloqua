@@ -5,7 +5,7 @@ import sys
 import backoff
 import requests
 from requests.exceptions import ConnectionError
-from singer import metrics,get_logger
+from singer import metrics,get_logger,strptime,strftime
 
 LOGGER = get_logger()
 
@@ -53,7 +53,7 @@ class EloquaClient(object):
                     config = json.load(tap_config)
                 self.__access_token = config['access_token']
                 self.__refresh_token = config['refresh_token']
-                self.__expires=config['expires_in']
+                self.__expires=strptime(config['expires_in'])
             except KeyError as _:
                 LOGGER.fatal("Unable to locate key %s in config",_)
                 sys.exit(1)
@@ -106,7 +106,7 @@ class EloquaClient(object):
                 config = json.load(file)
             config['refresh_token'] = data['refresh_token']
             config['access_token'] = data['access_token']
-            config['expires_in'] = data['expires_in']
+            config['expires_in'] = strftime(datetime.utcnow() + timedelta(seconds=data['expires_in']))
             with open(self.__config_path, 'w') as file:
                 json.dump(config, file, indent=2)
 
