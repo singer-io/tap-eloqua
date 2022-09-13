@@ -5,14 +5,15 @@ import sys
 import backoff
 import requests
 from requests.exceptions import ConnectionError
-from singer import metrics,get_logger,strptime,strftime
-
+from singer import metrics,get_logger
+from singer.utils import strptime_to_utc,now,strftime
+from .utils import read_config,write_config
 LOGGER = get_logger()
-
 
 
 class Server5xxError(Exception):
     pass
+
 
 class EloquaClient(object):
     def __init__(self,
@@ -48,26 +49,20 @@ class EloquaClient(object):
                           factor=2)
     def get_access_token(self):
         if self.dev_mode:
+            config = read_config(self.__config_path)
             try:
-                with open(self.__config_path) as tap_config:
-                    config = json.load(tap_config)
                 self.__access_token = config['access_token']
                 self.__refresh_token = config['refresh_token']
-                self.__expires=strptime(config['expires_in'])
+                self.__expires=strptime_to_utc(config['expires_in'])
             except KeyError as _:
                 LOGGER.fatal("Unable to locate key %s in config",_)
-                sys.exit(1)
-            except FileNotFoundError as _:
-                LOGGER.fatal("Failed to load config in dev mode")
-                sys.exit(1)
-
-            if self.__access_token is not None and self.__expires > datetime.utcnow():
+                raise Exception("Unable to locate key in config")
+            if self.__access_token is not None and self.__expires > now():
                 return
-            
-            LOGGER.fatal("Unable to find valid existing token, exiting tap")
-            sys.exit(1)
+            LOGGER.fatal("Access Token in config is expired, unable to authenticate in dev mode")
+            raise Exception("Access Token in config is expired, unable to authenticate in dev mode")
 
-        if self.__access_token is not None and self.__expires > datetime.utcnow():
+        if self.__access_token is not None and self.__expires > now():
             return
 
         headers = {}
@@ -97,21 +92,14 @@ class EloquaClient(object):
                     eloqua_response))
 
         data = response.json()
-
         self.__access_token = data['access_token']
         self.__refresh_token = data['refresh_token']
-        if not self.dev_mode:
-        ## refresh_token rotates on every reauth
-            with open(self.__config_path) as file:
-                config = json.load(file)
-            config['refresh_token'] = data['refresh_token']
-            config['access_token'] = data['access_token']
-            config['expires_in'] = strftime(datetime.utcnow() + timedelta(seconds=data['expires_in']))
-            with open(self.__config_path, 'w') as file:
-                json.dump(config, file, indent=2)
-
         expires_seconds = data['expires_in'] - 10 # pad by 10 seconds
-        self.__expires = datetime.utcnow() + timedelta(seconds=expires_seconds)
+        self.__expires = now() + timedelta(seconds=expires_seconds)
+
+        if not self.dev_mode:
+            update_config_keys = {"refresh_token":self.__refresh_token,"access_token":self.__access_token,"expires_in": strftime(self.__expires)}
+            config = write_config(self.__config_path,update_config_keys)
 
     def get_base_urls(self):
         data = self.request('GET',
@@ -164,3 +152,4 @@ class EloquaClient(object):
 
     def post(self, path, **kwargs):
         return self.request('POST', path=path, **kwargs)
+
