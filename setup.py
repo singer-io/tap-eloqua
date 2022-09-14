@@ -16,8 +16,9 @@ setup(name='tap-eloqua',
           'singer-python==5.2.0'
       ],
       extras_require={
-          'dev': [
-              'ipdb==0.11'
+          "dev": [
+              "pylint",
+              "ipdb",
           ]
       },
       entry_points='''
