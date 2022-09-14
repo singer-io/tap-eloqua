@@ -16,7 +16,7 @@ class MockResponse:
 
 
 def mocked_auth_post(*args, **kwargs):
-    return MockResponse({"access_token": "hellothere", "refresh_token": "hello", "expires_in": 5000}, status_code=200)
+    return MockResponse({"access_token": "", "refresh_token": "", "expires_in": 5000}, status_code=200)
 
 
 class Test_ClientDevMode(unittest.TestCase):

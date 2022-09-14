@@ -5,6 +5,10 @@ from singer import get_logger
 LOGGER = get_logger()
 
 def read_config(config_path) -> Dict:
+    """
+    Performs read on the provided filepath,
+    returns empty dict if invalid path provided
+    """
     try:
         with open(config_path,'r') as tap_config:
             return json.load(tap_config)
@@ -14,6 +18,9 @@ def read_config(config_path) -> Dict:
 
 
 def write_config(config_path,data :Dict) -> Dict:
+    """
+    Updates the provided filepath with json format of the `data` object
+    """
     config =  read_config(config_path)
     config.update(data)
     with open(config_path,'w') as tap_config:
