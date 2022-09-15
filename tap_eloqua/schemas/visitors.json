@@ -21,7 +21,7 @@
       "type": "string",
       "format": "date-time"
     },
-    "id":{
+    "id": {
       "type": "string"
     },
     "V_Browser_Type": {

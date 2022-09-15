@@ -102,7 +102,7 @@
             "string"
           ]
         },
-        "metaTags":{
+        "metaTags": {
           "type": "array",
           "items": {
             "type": "string"
@@ -150,8 +150,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "properties": {
-        }
+        "properties": {}
       }
     },
     "images": {
@@ -262,8 +261,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "properties": {
-        }
+        "properties": {}
       }
     },
     "dynamicContents": {
@@ -320,16 +318,14 @@
       "type": "array",
       "items": {
         "type": "object",
-        "properties": {
-        }
+        "properties": {}
       }
     },
     "files": {
       "type": "array",
       "items": {
         "type": "object",
-        "properties": {
-        }
+        "properties": {}
       }
     },
     "emailHeaderId": {

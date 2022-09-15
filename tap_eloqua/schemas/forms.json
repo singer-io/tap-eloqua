@@ -60,7 +60,7 @@
       "type": "string"
     },
     "elements": {
-      "type":"array",
+      "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": true,
@@ -126,7 +126,7 @@
       }
     },
     "processingSteps": {
-      "type":"array",
+      "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": true,

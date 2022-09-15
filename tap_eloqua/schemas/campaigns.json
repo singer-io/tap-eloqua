@@ -41,7 +41,7 @@
     },
     "updatedAt": {
       "type": "string",
-        "format": "date-time"
+      "format": "date-time"
     },
     "accessedAt": {
       "type": "string",
@@ -56,8 +56,7 @@
     },
     "elements": {
       "type": "array",
-      "items": {
-      }
+      "items": {}
     },
     "isReadOnly": {
       "type": "string"
@@ -84,8 +83,7 @@
     },
     "fieldValues": {
       "type": "array",
-      "items": {
-      }
+      "items": {}
     },
     "campaignType": {
       "type": "string"
