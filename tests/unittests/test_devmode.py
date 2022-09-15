@@ -1,9 +1,13 @@
-import json
-import unittest
-from tap_eloqua.client import EloquaClient, strftime
-from unittest.mock import patch
 import datetime
+import json
+import os
+import tempfile
+import unittest
+from unittest.mock import patch
+
 import pytz
+
+from tap_eloqua.client import EloquaClient, strftime
 
 
 class MockResponse:
@@ -20,27 +24,34 @@ def mocked_auth_post(*args, **kwargs):
 
 
 class Test_ClientDevMode(unittest.TestCase):
-    """Test the dev mode functionality"""
+    """Test the dev mode functionality."""
 
-    base_config = {"client_id": "",
-                   "client_secret": "",
-                   "refresh_token": "",
-                   "redirect_uri": "",
-                   "user_agent": "", }
-    tmp_config_path = "/tmp/eloqua_config.json"
-    
+    tmpdir = tempfile.mkdtemp()
+    predictable_filename = "eloqua_config.json"
+
+    base_config = {
+        "client_id": "",
+        "client_secret": "",
+        "refresh_token": "",
+        "redirect_uri": "",
+        "user_agent": "",
+    }
+
+    @property
+    def tmp_config_path(
+        self,
+    ):
+        return os.path.join(self.tmpdir, self.predictable_filename)
 
     @patch("requests.Session.post", side_effect=mocked_auth_post)
     def test_client_without_dev_mode(self, mocked_auth_post):
-        """checks if the client can write refresh token and expiry to config"""
-
-        config_sample = self.base_config
+        """checks if the client can write refresh token and expiry to
+        config."""
 
         with open(self.tmp_config_path, "w") as ff:
-            json.dump(config_sample, ff)
+            json.dump(self.base_config, ff)
 
-        params = {"config_path": self.tmp_config_path, "dev_mode": False}
-        params.update(self.base_config)
+        params = {"config_path": self.tmp_config_path, "dev_mode": False, **self.base_config}
 
         client = EloquaClient(**params)
         client.get_access_token()
@@ -51,16 +62,12 @@ class Test_ClientDevMode(unittest.TestCase):
             self.assertEqual(True, "refresh_token" in config)
 
     def test_devmode_accesstoken_absent(self, *args, **kwargs):
-        """
-        checks exception if access token is not present in config
-        """
-        config_sample = self.base_config
+        """checks exception if access token is not present in config."""
 
         with open(self.tmp_config_path, "w") as config_file:
-            json.dump(config_sample, config_file)
+            json.dump(self.base_config, config_file)
 
-        params = {"config_path": self.tmp_config_path, "dev_mode": True}
-        params.update(self.base_config)
+        params = {"config_path": self.tmp_config_path, "dev_mode": True, **self.base_config}
         try:
             client = EloquaClient(**params)
             client.get_access_token()
@@ -69,28 +76,30 @@ class Test_ClientDevMode(unittest.TestCase):
 
     @patch("requests.Session.post", side_effect=mocked_auth_post)
     def test_client_valid_token(self, mocked_auth_post):
-        """checks if the client can fetch and validate refresh token and expiry from config"""
+        """checks if the client can fetch and validate refresh token and expiry
+        from config."""
 
-        self.tmp_config_path = "/tmp/eloqua_config.json"
         config_sample = {
-            "access_token": "hellothere",
-            "expires_in": strftime(datetime.datetime.utcnow().replace(tzinfo=pytz.UTC) + datetime.timedelta(minutes=5))}
-        config_sample.update(self.base_config)
+            "access_token": "",
+            "expires_in": strftime(datetime.datetime.utcnow().replace(tzinfo=pytz.UTC) + datetime.timedelta(minutes=5)),
+            **self.base_config,
+        }
         with open(self.tmp_config_path, "w") as config_file:
             json.dump(config_sample, config_file)
         params = {"config_path": self.tmp_config_path, "dev_mode": True}
         params.update(self.base_config)
         EloquaClient(**params).get_access_token()
 
-
     @patch("requests.Session.post", side_effect=mocked_auth_post)
     def test_client_invalid_token(self, mocked_auth_post):
-        """checks if the client can fetch and validate refresh token and expiry from config"""
+        """checks if the client can fetch and validate refresh token and expiry
+        from config."""
 
         config_sample = {
-            "access_token": "hellothere",
-            "expires_in": strftime(datetime.datetime.utcnow().replace(tzinfo=pytz.UTC) - datetime.timedelta(minutes=5))}
-        config_sample.update(self.base_config)
+            "access_token": "",
+            "expires_in": strftime(datetime.datetime.utcnow().replace(tzinfo=pytz.UTC) - datetime.timedelta(minutes=5)),
+            **self.base_config,
+        }
         with open(self.tmp_config_path, "w") as config_file:
             json.dump(config_sample, config_file)
         params = {"config_path": self.tmp_config_path, "dev_mode": True}
@@ -98,5 +107,4 @@ class Test_ClientDevMode(unittest.TestCase):
         try:
             EloquaClient(**params).get_access_token()
         except Exception as _:
-            self.assertEqual(
-                str(_), "Access Token in config is expired, unable to authenticate in dev mode")
+            self.assertEqual(str(_), "Access Token in config is expired, unable to authenticate in dev mode")
