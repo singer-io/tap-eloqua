@@ -87,7 +87,6 @@ def parse_args(required_config_keys):
     return args
 
 
-#####
 
 
 @singer.utils.handle_top_exception(LOGGER)

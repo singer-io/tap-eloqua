@@ -94,16 +94,14 @@ def stream_export(
     offset=0,
     activity_type=None,
 ):
-    LOGGER.info("{} - Pulling export results - {}".format(stream_name, sync_id))
+    LOGGER.info("%s - Pulling export results - %s",stream_name, sync_id)
 
     write_schema(catalog, stream_name)
 
     has_more = True
     max_updated_at = None
     while has_more:
-        LOGGER.info(
-            "{} - Paginating export results - offset: {}, limit: {}".format(stream_name, offset, bulk_page_size)
-        )
+        LOGGER.info("%s - Paginating export results - offset: %s, limit: %s",stream_name, offset, bulk_page_size)
 
         write_bulk_bookmark(state, stream_name, sync_id, offset, bookmark_datetime)
 
@@ -142,7 +140,7 @@ class ActivityExportTooLarge(Exception):
 
 
 def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_size, activity_type=None, end_date=None):
-    LOGGER.info("{} - Starting export".format(stream_name))
+    LOGGER.info("%s - Starting export",stream_name)
 
     stream = catalog.get_stream(stream_name)
     if activity_type:
@@ -159,7 +157,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
     last_offset = last_bookmark.get("offset")
 
     if last_sync_id:
-        LOGGER.info("{} - Resuming previous export: {}".format(stream_name, last_sync_id))
+        LOGGER.info("%s - Resuming previous export: %s",stream_name, last_sync_id)
         try:
             last_date = stream_export(
                 client,
@@ -172,9 +170,9 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
                 last_date,
                 offset=last_offset,
             )
-        except HTTPError as e:
-            if e.response.status_code in [404, 410]:
-                LOGGER.info("{} - Previous export expired: {}".format(stream_name, last_sync_id))
+        except HTTPError as _:
+            if _.response.status_code in [404, 410]:
+                LOGGER.info("%s - Previous export expired: %s",stream_name, last_sync_id)
             else:
                 raise
 
@@ -193,7 +191,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
             "{} - Exports can only have 250 fields selected. {} are selected.".format(stream_name, num_fields)
         )
     else:
-        LOGGER.info("{} - Syncing {} fields".format(stream_name, num_fields))
+        LOGGER.info("%s - Syncing %s fields",stream_name, num_fields)
 
     language_obj = obj_meta["tap-eloqua.query-language-name"]
 
@@ -238,7 +236,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
 
         sync_id = re.match(r"/syncs/([0-9]+)", data["uri"]).groups()[0]
 
-        LOGGER.info("{} - Created export - {}".format(stream_name, sync_id))
+        LOGGER.info("%s - Created export - %s",stream_name, sync_id)
 
         write_bulk_bookmark(state, stream_name, sync_id, 0, last_date_raw)
 
@@ -260,7 +258,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
                 raise Exception(message)
 
             sleep = next_sleep_interval(sleep)
-            LOGGER.info("{} - status: {}, sleeping for {} seconds".format(stream_name, status, sleep))
+            LOGGER.info("%s - status: %s, sleeping for %s seconds",stream_name, status, sleep)
             time.sleep(sleep)
 
     # Check record count
@@ -270,7 +268,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
     export_success_log = next((i for i in data.get("items", []) if i.get("message") == success_message), None)
     if export_success_log:
         record_count = export_success_log["count"]
-        LOGGER.info("Sync id {} contains {} records.".format(sync_id, record_count))
+        LOGGER.info("Sync id %s contains %s records.",sync_id, record_count)
         if activity_type and record_count >= 5000000:
             raise ActivityExportTooLarge("Export too large, retrying with smaller window.")
 
@@ -297,7 +295,7 @@ def sync_static_endpoint(client, catalog, state, start_date, stream_id, path, up
     page = 1
     count = 1000
     while True:
-        LOGGER.info("Syncing {} since {} - page {}".format(stream_id, last_date, page))
+        LOGGER.info("Syncing %s since %s - page %s",stream_id, last_date, page)
         data = client.get(
             "/api/REST/2.0/{}".format(path),
             params={"count": count, "page": page, "depth": "complete", "orderBy": updated_at_col, "search": search},
