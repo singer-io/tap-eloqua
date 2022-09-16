@@ -57,7 +57,7 @@ class EloquaClient(object):
             except KeyError as _:
                 LOGGER.fatal("Unable to locate key %s in config",_)
                 raise Exception("Unable to locate key in config")
-            if self.__access_token is not None and self.__expires > now():
+            if self.__access_token and self.__expires > now():
                 return
             LOGGER.fatal("Access Token in config is expired, unable to authenticate in dev mode")
             raise Exception("Access Token in config is expired, unable to authenticate in dev mode")
