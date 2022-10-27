@@ -49,7 +49,7 @@ class Test_ClientDevMode(unittest.TestCase):
         with open(self.tmp_config_path, "w") as ff:
             json.dump(self.base_config, ff)
 
-        params = {"config_path": self.tmp_config_path, "dev_mode": False, **self.base_config}
+        params = {"config_path": self.tmp_config_path, "dev_mode": False, "config":self.base_config}
 
         client = EloquaClient(**params)
         client.get_access_token()
@@ -65,7 +65,8 @@ class Test_ClientDevMode(unittest.TestCase):
         with open(self.tmp_config_path, "w") as config_file:
             json.dump(self.base_config, config_file)
 
-        params = {"config_path": self.tmp_config_path, "dev_mode": True, **self.base_config}
+        params = {"config_path": self.tmp_config_path, "dev_mode": False, "config":self.base_config}
+
         try:
             client = EloquaClient(**params)
             client.get_access_token()

@@ -20,6 +20,7 @@ def read_config(config_path) -> Dict:
 def write_config(config_path,data :Dict) -> Dict:
     """
     Updates the provided filepath with json format of the `data` object
+    does a safe write by performing a read before write, updates only specific keys, does not rewrite.
     """
     config =  read_config(config_path)
     config.update(data)

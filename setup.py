@@ -10,10 +10,10 @@ setup(name='tap-eloqua',
       classifiers=['Programming Language :: Python :: 3 :: Only'],
       py_modules=['tap_eloqua'],
       install_requires=[
-          'backoff==1.3.2',
+          'backoff==1.8.0',
           'requests==2.20.1',
           'pendulum==2.0.3',
-          'singer-python==5.2.0'
+          'singer-python==5.12.2'
       ],
       extras_require={
           "dev": [

@@ -16,20 +16,14 @@ class Server5xxError(Exception):
 
 
 class EloquaClient(object):
-    def __init__(self,
-                 config_path,
-                 client_id,
-                 client_secret,
-                 refresh_token,
-                 redirect_uri,
-                 user_agent,
-                 dev_mode=False):
+    def __init__(self,config_path, config, dev_mode=False):
         self.__config_path = config_path
-        self.__client_id = client_id
-        self.__client_secret = client_secret
-        self.__refresh_token = refresh_token
-        self.__redirect_uri = redirect_uri
-        self.__user_agent = user_agent
+        self.config = config
+        self.__client_id = config["client_id"]
+        self.__client_secret = config["client_secret"]
+        self.__refresh_token = config["refresh_token"]
+        self.__redirect_uri = config["redirect_uri"]
+        self.__user_agent = config.get("user_agent","")
         self.dev_mode = dev_mode
         self.__access_token = None
         self.__expires = None
@@ -43,26 +37,19 @@ class EloquaClient(object):
     def __exit__(self, type, value, traceback):
         self.__session.close()
 
-    @backoff.on_exception(backoff.expo,
-                          Server5xxError,
-                          max_tries=5,
-                          factor=2)
+    @backoff.on_exception(backoff.expo,Server5xxError,max_tries=5,factor=2)
     def get_access_token(self):
         if self.dev_mode:
-            config = read_config(self.__config_path)
             try:
-                self.__access_token = config['access_token']
-                self.__refresh_token = config['refresh_token']
-                self.__expires=strptime_to_utc(config['expires_in'])
-            except KeyError as _:
-                LOGGER.fatal("Unable to locate key %s in config",_)
-                raise Exception("Unable to locate key in config")
-            if self.__access_token and self.__expires > now():
-                return
-            LOGGER.fatal("Access Token in config is expired, unable to authenticate in dev mode")
-            raise Exception("Access Token in config is expired, unable to authenticate in dev mode")
+                self.__access_token = self.config['access_token']
+                self.__expires=strptime_to_utc(self.config['expires_in'])
+            except KeyError as err:
+                raise Exception("Unable to locate key in config") from err
+            if not self.__access_token or self.__expires < now():
+                LOGGER.fatal("Access Token in config is expired, unable to authenticate in dev mode")
+                raise Exception("Access Token in config is expired, unable to authenticate in dev mode")
 
-        if self.__access_token is not None and self.__expires > now():
+        if self.__access_token and self.__expires > now():
             return
 
         headers = {}
@@ -85,11 +72,8 @@ class EloquaClient(object):
 
         if response.status_code != 200:
             eloqua_response = response.json()
-            eloqua_response.update(
-                {'status': response.status_code})
-            raise Exception(
-                'Unable to authenticate (Eloqua response: `{}`)'.format(
-                    eloqua_response))
+            eloqua_response.update({'status': response.status_code})
+            raise Exception('Unable to authenticate (Eloqua response: `{}`)'.format(eloqua_response))
 
         data = response.json()
         self.__access_token = data['access_token']
@@ -99,7 +83,7 @@ class EloquaClient(object):
 
         if not self.dev_mode:
             update_config_keys = {"refresh_token":self.__refresh_token,"access_token":self.__access_token,"expires_in": strftime(self.__expires)}
-            config = write_config(self.__config_path,update_config_keys)
+            self.config = write_config(self.__config_path,update_config_keys)
 
     def get_base_urls(self):
         data = self.request('GET',
