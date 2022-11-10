@@ -377,12 +377,12 @@ def sync_activity_stream(client,
                          activity_type):
     finished = False
     sync_start = pendulum.now('UTC')
-    end_date,last_date = sync_start,None
+    end_date, last_sync_date = sync_start, None
     while not finished:
         try:
             # Get latest bookmark to adjust time window from, if needed
             last_date_raw = get_bulk_bookmark(state, stream_name).get('datetime', start_date)
-            last_date = pendulum.parse(last_date_raw)
+            last_sync_date = pendulum.parse(last_date_raw)
 
             update_current_stream(state, stream_name)
             sync_bulk_obj(client,
@@ -399,8 +399,8 @@ def sync_activity_stream(client,
                 # If not done, sync again to now()
                 end_date = sync_start
         except ActivityExportTooLarge as ex:
-            LOGGER.warn(ex)
-            end_date = last_date.add(seconds=(end_date - last_date).total_seconds() / 2)
+            LOGGER.warning(ex)
+            end_date = last_sync_date.add(seconds=(end_date - last_sync_date).total_seconds() / 2)
             if end_date > sync_start:
                 end_date = sync_start
 
