@@ -35,17 +35,12 @@ from singer.catalog import Catalog
 def main():
     args = singer.parse_args(REQUIRED_CONFIG_KEYS)
     if args.dev:
-        LOGGER.warning("Executing Tap in Dev mode",)    
-    with EloquaClient(args.config_path,args.config,args.dev) as client:
-
+        LOGGER.warning("Executing Tap in Dev mode")  
+    with EloquaClient(args.config_path, args.config, args.dev) as client:
         if args.discover:
             do_discover(client)
         elif args.catalog:
-            sync(client,
-                 args.catalog,
-                 args.state,
-                 args.config['start_date'],
-                 int(args.config.get('bulk_page_size', 5000)))
+            sync(client, args.catalog, args.state, args.config)
 
 if __name__ == "__main__":
     main()

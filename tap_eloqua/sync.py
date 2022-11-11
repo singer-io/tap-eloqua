@@ -404,7 +404,9 @@ def sync_activity_stream(client,
             if end_date > sync_start:
                 end_date = sync_start
 
-def sync(client, catalog, state, start_date, bulk_page_size):
+def sync(client, catalog, state, config):
+    start_date = config['start_date'],
+    bulk_page_size = int(config.get('bulk_page_size', 5000))
     selected_streams = get_selected_streams(catalog)
 
     if not selected_streams:
