@@ -2,11 +2,7 @@
 
 import sys
 import json
-import argparse
-
 import singer
-from singer import metadata
-
 from tap_eloqua.client import EloquaClient
 from tap_eloqua.discover import discover
 from tap_eloqua.sync import sync
@@ -27,9 +23,6 @@ def do_discover(client):
     json.dump(catalog.to_dict(), sys.stdout, indent=2)
     LOGGER.info('Finished discover')
 
-##### TEMP
-
-from singer.catalog import Catalog
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():
