@@ -65,7 +65,7 @@ class Test_ClientDevMode(unittest.TestCase):
         with open(self.tmp_config_path, "w") as config_file:
             json.dump(self.base_config, config_file)
 
-        params = {"config_path": self.tmp_config_path, "dev_mode": False, "config":self.base_config}
+        params = {"config_path": self.tmp_config_path, "dev_mode": True, "config":self.base_config}
 
         try:
             client = EloquaClient(**params)
@@ -73,18 +73,22 @@ class Test_ClientDevMode(unittest.TestCase):
         except Exception as _:
             self.assertEqual(str(_), "Unable to locate key in config")
 
+
     @patch("requests.Session.post", side_effect=mocked_auth_post)
     def test_client_valid_token(self, mocked_auth_post):
         """checks if the client can fetch and validate refresh token and expiry
         from config."""
 
         config_sample = {
-            "access_token": "",
-            "expires_in": strftime(datetime.datetime.utcnow().replace(tzinfo=pytz.UTC) + datetime.timedelta(minutes=5)),
-            "dev_mode": True,
+            "access_token": "token",
+            "expires_in": strftime(datetime.datetime.utcnow().replace(tzinfo=pytz.UTC) + datetime.timedelta(days=5)),
             **self.base_config,
         }
-        EloquaClient(**config_sample).get_access_token()
+        print(config_sample)
+        with open(self.tmp_config_path, "w") as config_file:
+            json.dump(config_sample, config_file)
+        params = {"config_path": self.tmp_config_path, "dev_mode": True, "config":config_sample}
+        EloquaClient(**params).get_access_token()
 
     @patch("requests.Session.post", side_effect=mocked_auth_post)
     def test_client_invalid_token(self, mocked_auth_post):
@@ -92,12 +96,14 @@ class Test_ClientDevMode(unittest.TestCase):
         from config."""
 
         config_sample = {
-            "access_token": "",
+            "access_token": "token",
             "expires_in": strftime(datetime.datetime.utcnow().replace(tzinfo=pytz.UTC) - datetime.timedelta(minutes=5)),
-            "dev_mode": True,
             **self.base_config,
         }
+        with open(self.tmp_config_path, "w") as config_file:
+            json.dump(config_sample, config_file)
+        params = {"config_path": self.tmp_config_path, "dev_mode": True, "config":config_sample}
         try:
-            EloquaClient(**config_sample).get_access_token()
-        except Exception as err:
-            self.assertEqual(str(err), "Access Token in config is expired, unable to authenticate in dev mode")
+            EloquaClient(**params).get_access_token()
+        except Exception as _:
+            self.assertEqual(str(_), "Access Token in config is expired, unable to authenticate in dev mode")
