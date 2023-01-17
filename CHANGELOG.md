@@ -1,7 +1,4 @@
 # Changelog
-## [1.3.1] 
-- Updates circleci config [#42](https://github.com/singer-io/tap-eloqua/pull/42)
-
 ## [1.3.0] 2021-03-19
 - Adds email groups and contact object [#38](https://github.com/singer-io/tap-eloqua/pull/38)
 
