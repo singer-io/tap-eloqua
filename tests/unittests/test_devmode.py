@@ -106,7 +106,7 @@ class Test_ClientDevMode(unittest.TestCase):
 
     def tearDown(self) -> None:
         try:
-            os.remove(self.tmp_config_path())
+            os.remove(self.tmp_config_path)
             os.rmdir(self.tmpdir)
         except OSError:
             pass
