@@ -37,6 +37,11 @@ class Test_ClientDevMode(unittest.TestCase):
         "user_agent": "",
     }
 
+    def setUp(self) -> None:
+        self.tmpdir = tempfile.mkdtemp()
+        self.predictable_filename = "eloqua_config.json"
+        return super().setUp()
+
     @property
     def tmp_config_path(self):
         return os.path.join(self.tmpdir, self.predictable_filename)
