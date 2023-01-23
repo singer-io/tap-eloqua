@@ -174,7 +174,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
                                       last_date,
                                       offset=last_offset)
         except HTTPError as ex:
-            if e.response.status_code in [404, 410]:
+            if ex.response.status_code in [404, 410]:
                 LOGGER.info('{} - Previous export expired: {}'.format(stream_name, last_sync_id))
             else:
                 raise
