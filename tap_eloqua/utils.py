@@ -5,7 +5,7 @@ from singer import get_logger
 LOGGER = get_logger()
 
 
-def write_config(config_path,data :Dict) -> Dict:
+def write_config(config_path,data) :
     """
     Updates the provided filepath with json format of the `data` object
     does a safe write by performing a read before write, updates only specific keys, does not rewrite.

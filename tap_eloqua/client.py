@@ -35,14 +35,17 @@ class EloquaClient(object):
     def __exit__(self, type, value, traceback):
         self.__session.close()
 
-    @backoff.on_exception(backoff.expo,Server5xxError,5,factor=2)
+    @backoff.on_exception(backoff.expo,
+                          Server5xxError,
+                          max_tries=5,
+                          factor=2)
     def get_access_token(self):
         if self.dev_mode:
             try:
                 self.__access_token = self.config['access_token']
                 self.__expires=strptime_to_utc(self.config['expires_in'])
-            except KeyError as err:
-                raise Exception("Unable to locate key in config") from err
+            except KeyError as ex:
+                raise Exception("Unable to locate key in config") from ex
             if not self.__access_token or self.__expires < now():
                 raise Exception("Access Token in config is expired, unable to authenticate in dev mode")
 
@@ -79,14 +82,21 @@ class EloquaClient(object):
         self.__expires = now() + timedelta(seconds=expires_in_seconds)
 
         if not self.dev_mode:
-            update_config_keys = {"refresh_token":self.__refresh_token,"access_token":self.__access_token,"expires_in": strftime(self.__expires)}
+            update_config_keys = {
+                                    "refresh_token":self.__refresh_token,
+                                    "access_token":self.__access_token,
+                                    "expires_in": strftime(self.__expires)
+                                }
             self.config = write_config(self.__config_path,update_config_keys)
 
     def get_base_urls(self):
         data = self.request('GET',url='https://login.eloqua.com/id',endpoint='base_url')
         self.__base_url = data['urls']['base']
 
-    @backoff.on_exception(backoff.expo,(Server5xxError, ConnectionError),5,factor=2)
+    @backoff.on_exception(backoff.expo,
+                          (Server5xxError, ConnectionError),
+                          max_tries=5,
+                          factor=2)
     def request(self, method, path=None, url=None, **kwargs):
         self.get_access_token()
 
@@ -128,4 +138,3 @@ class EloquaClient(object):
 
     def post(self, path, **kwargs):
         return self.request('POST', path=path, **kwargs)
-

@@ -173,7 +173,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
                                       bulk_page_size,
                                       last_date,
                                       offset=last_offset)
-        except HTTPError as e:
+        except HTTPError as ex:
             if e.response.status_code in [404, 410]:
                 LOGGER.info('{} - Previous export expired: {}'.format(stream_name, last_sync_id))
             else:
@@ -405,7 +405,7 @@ def sync_activity_stream(client,
                 end_date = sync_start
 
 def sync(client, catalog, state, config):
-    start_date = config['start_date'],
+    start_date = config['start_date']
     bulk_page_size = int(config.get('bulk_page_size', 5000))
     selected_streams = get_selected_streams(catalog)
 

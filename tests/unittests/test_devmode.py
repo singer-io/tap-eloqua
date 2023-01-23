@@ -68,8 +68,8 @@ class Test_ClientDevMode(unittest.TestCase):
             client = EloquaClient(config_path=self.tmp_config_path,dev_mode=True,config=self.base_config)
 
             client.get_access_token()
-        except Exception as error:
-            self.assertEqual(str(error), "Unable to locate key in config")
+        except Exception as ex:
+            self.assertEqual(str(ex), "Unable to locate key in config")
 
     @patch("requests.Session.post", side_effect=mocked_auth_post)
     def test_client_valid_token(self, mocked_auth_post):
@@ -101,5 +101,13 @@ class Test_ClientDevMode(unittest.TestCase):
         try:
             client = EloquaClient(config_path=self.tmp_config_path,dev_mode=True,config=config_sample)
             client.get_access_token()
-        except Exception as error:
-            self.assertEqual(str(error), "Access Token in config is expired, unable to authenticate in dev mode")
+        except Exception as ex:
+            self.assertEqual(str(ex), "Access Token in config is expired, unable to authenticate in dev mode")
+
+    def tearDown(self) -> None:
+        try:
+            os.remove(self.tmp_config_path())
+            os.rmdir(self.tmpdir)
+        except OSError:
+            pass
+        return super().tearDown()
