@@ -93,7 +93,7 @@ class Test_ClientDevMode(unittest.TestCase):
         expiry_time = strftime(datetime.datetime.utcnow().replace(tzinfo=pytz.UTC) - datetime.timedelta(minutes=5))
         config_sample = {
             "access_token": "token",
-            "expires_in": expiry_time
+            "expires_in": expiry_time,
             **self.base_config,
         }
         with open(self.tmp_config_path, "w") as config_file:
