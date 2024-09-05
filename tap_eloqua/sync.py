@@ -173,8 +173,8 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
                                       bulk_page_size,
                                       last_date,
                                       offset=last_offset)
-        except HTTPError as e:
-            if e.response.status_code in [404, 410]:
+        except HTTPError as ex:
+            if ex.response.status_code in [404, 410]:
                 LOGGER.info('{} - Previous export expired: {}'.format(stream_name, last_sync_id))
             else:
                 raise
@@ -377,12 +377,12 @@ def sync_activity_stream(client,
                          activity_type):
     finished = False
     sync_start = pendulum.now('UTC')
-    end_date = sync_start
+    end_date, last_sync_date = sync_start, None
     while not finished:
         try:
             # Get latest bookmark to adjust time window from, if needed
             last_date_raw = get_bulk_bookmark(state, stream_name).get('datetime', start_date)
-            last_date = pendulum.parse(last_date_raw)
+            last_sync_date = pendulum.parse(last_date_raw)
 
             update_current_stream(state, stream_name)
             sync_bulk_obj(client,
@@ -399,12 +399,14 @@ def sync_activity_stream(client,
                 # If not done, sync again to now()
                 end_date = sync_start
         except ActivityExportTooLarge as ex:
-            LOGGER.warn(ex)
-            end_date = last_date.add(seconds=(end_date - last_date).total_seconds() / 2)
+            LOGGER.warning(ex)
+            end_date = last_sync_date.add(seconds=(end_date - last_sync_date).total_seconds() / 2)
             if end_date > sync_start:
                 end_date = sync_start
 
-def sync(client, catalog, state, start_date, bulk_page_size):
+def sync(client, catalog, state, config):
+    start_date = config['start_date']
+    bulk_page_size = int(config.get('bulk_page_size', 5000))
     selected_streams = get_selected_streams(catalog)
 
     if not selected_streams:
