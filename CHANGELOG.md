@@ -1,5 +1,8 @@
 # Changelog
 ## [1.3.0] 2021-03-19
+## 1.3.1
+  * Dependabot update [#44](https://github.com/singer-io/tap-eloqua/pull/44)
+
 - Adds email groups and contact object [#38](https://github.com/singer-io/tap-eloqua/pull/38)
 
 ## [1.2.2] 2020-11-04
