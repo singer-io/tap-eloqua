@@ -1,4 +1,8 @@
 # Changelog
+
+## [1.3.1] 2025-06-23
+- Bump backoff to `1.10.0`, bump requests to `2.32.4` [#45](https://github.com/singer-io/tap-eloqua/pull/45)
+
 ## [1.3.0] 2021-03-19
 - Adds email groups and contact object [#38](https://github.com/singer-io/tap-eloqua/pull/38)
 
