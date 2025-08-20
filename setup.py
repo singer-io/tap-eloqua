@@ -17,7 +17,7 @@ setup(name='tap-eloqua',
       ],
       extras_require={
           'dev': [
-              'ipdb==0.11'
+              'ipdb'
           ]
       },
       entry_points='''
