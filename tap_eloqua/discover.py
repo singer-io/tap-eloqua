@@ -13,7 +13,6 @@ def discover(client):
         # existing field-level metadata from schema.py
         md_list = field_metadata[stream_name]
         m = mdata.to_map(md_list)
-        m = mdata.write(m, (), 'inclusion', 'available')
         m = mdata.write(m, (), 'forced-replication-method', 'FULL_TABLE')
         md_list = mdata.to_list(m)
 
