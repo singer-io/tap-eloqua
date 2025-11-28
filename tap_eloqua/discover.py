@@ -9,15 +9,14 @@ def discover(client):
 
     for stream_name, schema_dict in schemas.items():
         schema = Schema.from_dict(schema_dict)
-
-        # existing field-level metadata from schema.py
+        properties = schema_dict.get("properties", {})
+        replication_key = "updatedAt" if "UpdatedAt" in properties else None
+        replication_method = "INCREMENTAL" if replication_key else "FULL_TABLE"
         md_list = field_metadata[stream_name]
         m = mdata.to_map(md_list)
-        m = mdata.write(m, (), 'forced-replication-method', 'FULL_TABLE')
+        m = mdata.write(m, (), 'forced-replication-method', replication_method)
         md_list = mdata.to_list(m)
-
         pk = get_pk(stream_name)
-
         catalog.streams.append(CatalogEntry(
             stream=stream_name,
             tap_stream_id=stream_name,
