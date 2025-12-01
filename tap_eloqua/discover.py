@@ -10,7 +10,10 @@ def discover(client):
     for stream_name, schema_dict in schemas.items():
         schema = Schema.from_dict(schema_dict)
         properties = schema_dict.get("properties", {})
-        replication_key = next((k for k in properties if k.lower() == "updatedat"), None)
+        replication_key = next(
+            (k for k in properties if k.lower() == "updatedat" or k == "updatedAt"),
+            None
+        )
         replication_method = "INCREMENTAL" if replication_key else "FULL_TABLE"
         md_list = field_metadata[stream_name]
         m = mdata.to_map(md_list)

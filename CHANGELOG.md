@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.4.0] 2025-11-28
+- Added replication method into metadata [#49](https://github.com/singer-io/tap-eloqua/pull/49)
+
 ## [1.3.1] 2025-06-23
 - Bump backoff to `1.10.0`, bump requests to `2.32.4`, bump
   singer-python to 5.13.2
