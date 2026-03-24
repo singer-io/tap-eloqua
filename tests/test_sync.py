@@ -56,7 +56,7 @@ class SyncTest(EloquaBaseTest):
 
             # Mock bulk sync status (completed)
             if "bulk/2.0/syncs/200" in path and endpoint == "export_sync_poll":
-                return {"status": "succeeded"}
+                return {"status": "success"}
 
             # Mock bulk data retrieval
             if "bulk/2.0/syncs/200/data" in path:
