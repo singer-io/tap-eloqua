@@ -11,10 +11,10 @@ from tap_eloqua.sync import (
 
 
 class TestSyncHelpersUnit(unittest.TestCase):
-    @patch("tap_eloqua.sync.random.randint", return_value=4)
+    @patch("tap_eloqua.sync.random.randint", return_value=2)
     def test_next_sleep_interval_uses_min_on_first_call(self, mock_randint):
         value = next_sleep_interval(0)
-        self.assertEqual(value, 4)
+        self.assertEqual(value, MIN_RETRY_INTERVAL)
         mock_randint.assert_called_once_with(MIN_RETRY_INTERVAL, MIN_RETRY_INTERVAL)
 
     @patch("tap_eloqua.sync.random.randint", return_value=7)
@@ -23,10 +23,11 @@ class TestSyncHelpersUnit(unittest.TestCase):
         self.assertEqual(value, 7)
         mock_randint.assert_called_once_with(5, 10)
 
-    @patch("tap_eloqua.sync.random.randint", return_value=9999)
+    @patch("tap_eloqua.sync.random.randint", return_value=600)
     def test_next_sleep_interval_caps_at_max(self, mock_randint):
         value = next_sleep_interval(MAX_RETRY_INTERVAL)
         self.assertEqual(value, MAX_RETRY_INTERVAL)
+        mock_randint.assert_called_once_with(MAX_RETRY_INTERVAL, MAX_RETRY_INTERVAL * 2)
 
     def test_get_bookmark_with_and_without_value(self):
         state = {"bookmarks": {"accounts": "2024-01-01T00:00:00Z"}}

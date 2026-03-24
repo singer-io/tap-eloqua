@@ -56,7 +56,7 @@ class SyncTest(EloquaBaseTest):
 
             # Mock bulk sync status (completed)
             if "bulk/2.0/syncs/200" in path and endpoint == "export_sync_poll":
-                return {"status": "succeeded"}
+                return {"status": "success"}
 
             # Mock bulk data retrieval
             if "bulk/2.0/syncs/200/data" in path:
@@ -355,7 +355,9 @@ class SyncStateManagementTest(EloquaBaseTest):
 
         # Last state write should set current_stream to None
         last_write = mock_write_state.call_args_list[-1]
-        # The state dict passed to write_state should have current_stream: None at the end
+        final_state = last_write[0][0]
+        self.assertIn("current_stream", final_state)
+        self.assertIsNone(final_state["current_stream"])
 
 
 if __name__ == "__main__":
