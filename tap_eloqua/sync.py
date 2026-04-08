@@ -252,8 +252,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
 
         sleep = 0
         start_time = time.time()
-        status = None
-        while status != 'success':
+        while True:
             data = client.get(
                 '/api/bulk/2.0/syncs/{}'.format(sync_id),
                 endpoint='export_sync_poll')
@@ -314,8 +313,7 @@ def sync_static_endpoint(client, catalog, state, start_date, stream_id, path, up
 
     page = 1
     count = 1000
-    records = None
-    while records is None or len(records) >= count:
+    while True:
         LOGGER.info('Syncing {} since {} - page {}'.format(stream_id, last_date, page))
         data = client.get(
             '/api/REST/2.0/{}'.format(path),
@@ -336,6 +334,9 @@ def sync_static_endpoint(client, catalog, state, start_date, stream_id, path, up
             max_updated_at = pendulum.from_timestamp(
                 int(records[-1][updated_at_col])).to_iso8601_string()
             write_bookmark(state, stream_id, max_updated_at)
+
+        if len(records) < count:
+            break
 
 def get_selected_streams(catalog):
     selected_streams = set()
