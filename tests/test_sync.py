@@ -7,10 +7,7 @@ from singer.catalog import Catalog
 
 from tap_eloqua.sync import sync, get_selected_streams, persist_records
 
-try:
-    from .base import EloquaBaseTest
-except ImportError:
-    from base import EloquaBaseTest
+from .base import EloquaBaseTest
 
 
 class SyncTest(EloquaBaseTest):
@@ -278,21 +275,51 @@ class SyncTest(EloquaBaseTest):
 
         sync(client, catalog, state, start_date, 1000)
 
-        # Verify client was called (would include start_date in query)
-        self.assertGreater(client.get.call_count, 0)
+        # Verify start_date appears in the search filter sent to the visitors endpoint
+        visitors_calls = [
+            c for c in client.get.call_args_list
+            if "/api/REST/2.0/data/visitors" in c[0][0]
+        ]
+        self.assertTrue(visitors_calls, "client.get was never called for the visitors endpoint")
+        first_params = visitors_calls[0].kwargs["params"]
+        self.assertIn("2024-06-01 00:00:00", first_params["search"])
 
     @patch("tap_eloqua.sync.singer.write_schema")
     @patch("tap_eloqua.sync.singer.write_record")
     @patch("tap_eloqua.sync.singer.write_state")
     def test_sync_handles_pagination(self, mock_write_state, mock_write_record, mock_write_schema):
-        """Test that sync handles paginated responses correctly."""
-        client = self._create_mock_client()
+        """Test that sync handles paginated responses correctly (multiple pages fetched)."""
+        # Build a client that returns a full page (1000 records) then a short page
+        paginating_client = MagicMock()
+        visitors_call_count = [0]
+
+        def paginated_side_effect(path, params=None, endpoint=None):
+            if "/api/REST/2.0/data/visitors" in path:
+                visitors_call_count[0] += 1
+                if visitors_call_count[0] == 1:
+                    return {
+                        "elements": [
+                            {"id": str(i), "V_LastVisitDateAndTime": 1704067200 + i}
+                            for i in range(1000)
+                        ]
+                    }
+                return {"elements": [{"id": "1001", "V_LastVisitDateAndTime": 1704069000}]}
+            return {"items": []}
+
+        paginating_client.get.side_effect = paginated_side_effect
+        paginating_client.post.return_value = {"uri": "/exports/100"}
+
         catalog = self._create_catalog_with_selected_streams(["visitors"])
         state = {}
 
-        sync(client, catalog, state, "2024-01-01T00:00:00Z", 1000)
+        sync(paginating_client, catalog, state, "2024-01-01T00:00:00Z", 1000)
 
-        # Should have processed results
+        # Pagination is exercised: at least 2 calls to the visitors endpoint
+        visitors_calls = [
+            c for c in paginating_client.get.call_args_list
+            if "/api/REST/2.0/data/visitors" in c[0][0]
+        ]
+        self.assertGreaterEqual(len(visitors_calls), 2)
         self.assertGreater(mock_write_record.call_count, 0)
 
 

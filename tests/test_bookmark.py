@@ -12,7 +12,11 @@ class BookmarkTest(unittest.TestCase):
         state = {}
         write_bookmark(state, "visitors", "2024-01-01T00:00:00Z")
 
+        # Validate overall bookmark state structure
+        self.assertIsInstance(state, dict)
         self.assertIn("bookmarks", state)
+        self.assertIsInstance(state["bookmarks"], dict)
+
         self.assertEqual(state["bookmarks"]["visitors"], "2024-01-01T00:00:00Z")
         mock_write_state.assert_called_once_with(state)
 

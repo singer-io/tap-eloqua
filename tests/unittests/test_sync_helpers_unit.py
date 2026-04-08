@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import patch
 
+import pendulum
+
 from tap_eloqua.sync import (
     MIN_RETRY_INTERVAL,
     MAX_RETRY_INTERVAL,
@@ -58,6 +60,16 @@ class TestSyncHelpersUnit(unittest.TestCase):
                 "offset": 100,
             },
         )
+
+    def test_pendulum_parse_to_datetime_string_format(self):
+        """Validate that pendulum 3.x still produces 'YYYY-MM-DD HH:MM:SS'
+        from to_datetime_string(), which the tap uses as the filter value
+        sent to the Eloqua API."""
+        dt = pendulum.parse("2024-06-01T00:00:00Z")
+        result = dt.to_datetime_string()
+        # Must be exactly the format used in API filter construction
+        self.assertRegex(result, r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$")
+        self.assertEqual(result, "2024-06-01 00:00:00")
 
 
 if __name__ == "__main__":

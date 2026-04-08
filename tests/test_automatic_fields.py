@@ -1,75 +1,14 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from singer.catalog import Catalog
-
 from tap_eloqua.sync import sync_bulk_obj
 
+from .base import EloquaBaseTest
 
-class AutomaticFieldsTest(unittest.TestCase):
+
+class AutomaticFieldsTest(EloquaBaseTest):
     def _catalog(self):
-        return Catalog.from_dict(
-            {
-                "streams": [
-                    {
-                        "tap_stream_id": "accounts",
-                        "stream": "accounts",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "Id": {"type": "string"},
-                                "UpdatedAt": {"type": "string", "format": "date-time"},
-                                "Name": {"type": ["null", "string"]},
-                                "Email": {"type": ["null", "string"]},
-                            },
-                        },
-                        "key_properties": ["Id"],
-                        "metadata": [
-                            {
-                                "breadcrumb": [],
-                                "metadata": {
-                                    "selected": True,
-                                    "tap-eloqua.id": None,
-                                    "tap-eloqua.query-language-name": "Account",
-                                },
-                            },
-                            {
-                                "breadcrumb": ["properties", "Id"],
-                                "metadata": {
-                                    "inclusion": "automatic",
-                                    "selected": False,
-                                    "tap-eloqua.statement": "{{Account.Id}}",
-                                },
-                            },
-                            {
-                                "breadcrumb": ["properties", "UpdatedAt"],
-                                "metadata": {
-                                    "inclusion": "automatic",
-                                    "selected": False,
-                                    "tap-eloqua.statement": "{{Account.UpdatedAt}}",
-                                },
-                            },
-                            {
-                                "breadcrumb": ["properties", "Name"],
-                                "metadata": {
-                                    "inclusion": "available",
-                                    "selected": False,
-                                    "tap-eloqua.statement": "{{Account.Name}}",
-                                },
-                            },
-                            {
-                                "breadcrumb": ["properties", "Email"],
-                                "metadata": {
-                                    "inclusion": "available",
-                                    "selected": True,
-                                    "tap-eloqua.statement": "{{Account.Email}}",
-                                },
-                            },
-                        ],
-                    }
-                ]
-            }
-        )
+        return self._accounts_catalog(name_selected=False)
 
     @patch("tap_eloqua.sync.stream_export")
     @patch("tap_eloqua.sync.write_bulk_bookmark")

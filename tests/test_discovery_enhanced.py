@@ -7,10 +7,7 @@ from singer import metadata
 
 from tap_eloqua.discover import discover
 
-try:
-    from .base import EloquaBaseTest
-except ImportError:
-    from base import EloquaBaseTest
+from .base import EloquaBaseTest
 
 
 class DiscoveryTest(EloquaBaseTest):

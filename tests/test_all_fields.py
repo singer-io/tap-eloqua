@@ -1,68 +1,20 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from singer.catalog import Catalog
-
 from tap_eloqua.sync import sync_bulk_obj
 
+from .base import EloquaBaseTest
 
-class AllFieldsTest(unittest.TestCase):
+
+class AllFieldsTest(EloquaBaseTest):
     def _catalog(self, include_many=False):
-        metadata = [
-            {
-                "breadcrumb": [],
-                "metadata": {
-                    "selected": True,
-                    "tap-eloqua.id": None,
-                    "tap-eloqua.query-language-name": "Account",
-                },
-            },
-            {
-                "breadcrumb": ["properties", "Id"],
-                "metadata": {
-                    "inclusion": "automatic",
-                    "selected": False,
-                    "tap-eloqua.statement": "{{Account.Id}}",
-                },
-            },
-            {
-                "breadcrumb": ["properties", "UpdatedAt"],
-                "metadata": {
-                    "inclusion": "automatic",
-                    "selected": False,
-                    "tap-eloqua.statement": "{{Account.UpdatedAt}}",
-                },
-            },
-            {
-                "breadcrumb": ["properties", "Name"],
-                "metadata": {
-                    "inclusion": "available",
-                    "selected": True,
-                    "tap-eloqua.statement": "{{Account.Name}}",
-                },
-            },
-            {
-                "breadcrumb": ["properties", "Email"],
-                "metadata": {
-                    "inclusion": "available",
-                    "selected": True,
-                    "tap-eloqua.statement": "{{Account.Email}}",
-                },
-            },
-        ]
-
-        properties = {
-            "Id": {"type": "string"},
-            "UpdatedAt": {"type": "string", "format": "date-time"},
-            "Name": {"type": ["null", "string"]},
-            "Email": {"type": ["null", "string"]},
-        }
-
+        extra_properties = {}
+        extra_metadata = []
         if include_many:
             for index in range(251):
                 field_name = f"Field{index}"
-                properties[field_name] = {"type": ["null", "string"]}
-                metadata.append(
+                extra_properties[field_name] = {"type": ["null", "string"]}
+                extra_metadata.append(
                     {
                         "breadcrumb": ["properties", field_name],
                         "metadata": {
@@ -72,22 +24,10 @@ class AllFieldsTest(unittest.TestCase):
                         },
                     }
                 )
-
-        return Catalog.from_dict(
-            {
-                "streams": [
-                    {
-                        "tap_stream_id": "accounts",
-                        "stream": "accounts",
-                        "schema": {
-                            "type": "object",
-                            "properties": properties,
-                        },
-                        "key_properties": ["Id"],
-                        "metadata": metadata,
-                    }
-                ]
-            }
+        return self._accounts_catalog(
+            name_selected=True,
+            extra_properties=extra_properties or None,
+            extra_metadata=extra_metadata or None,
         )
 
     @patch("tap_eloqua.sync.stream_export")
