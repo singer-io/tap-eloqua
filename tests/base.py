@@ -107,7 +107,7 @@ class EloquaBaseTest(unittest.TestCase):
             "visitors": {
                 cls.PRIMARY_KEYS: set(),
                 cls.REPLICATION_METHOD: "FULL_TABLE",
-                cls.REPLICATION_KEYS: {"V_LastVisitDateAndTime"},
+                cls.REPLICATION_KEYS: set(),
                 cls.OBEYS_START_DATE: True,
             },
             "campaigns": {

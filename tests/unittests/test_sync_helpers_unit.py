@@ -9,6 +9,7 @@ from tap_eloqua.sync import (
     next_sleep_interval,
     get_bookmark,
     get_bulk_bookmark,
+    _to_eloqua_datetime,
 )
 
 
@@ -61,15 +62,21 @@ class TestSyncHelpersUnit(unittest.TestCase):
             },
         )
 
-    def test_pendulum_parse_to_datetime_string_format(self):
-        """Validate that pendulum 3.x still produces 'YYYY-MM-DD HH:MM:SS'
-        from to_datetime_string(), which the tap uses as the filter value
-        sent to the Eloqua API."""
-        dt = pendulum.parse("2024-06-01T00:00:00Z")
-        result = dt.to_datetime_string()
-        # Must be exactly the format used in API filter construction
+    def test_to_eloqua_datetime_from_string(self):
+        """_to_eloqua_datetime produces YYYY-MM-DD HH:MM:SS from an RFC-3339 string.
+        Uses explicit .format() so behaviour is not tied to the deprecated
+        to_datetime_string() and is safe across Pendulum 2.x / 3.x."""
+        result = _to_eloqua_datetime("2024-06-01T00:00:00Z")
         self.assertRegex(result, r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$")
         self.assertEqual(result, "2024-06-01 00:00:00")
+
+    def test_to_eloqua_datetime_from_pendulum_object(self):
+        """_to_eloqua_datetime accepts a pendulum DateTime directly
+        (used for the end_date argument in sync_bulk_obj)."""
+        dt = pendulum.parse("2024-08-15T12:30:45Z")
+        result = _to_eloqua_datetime(dt)
+        self.assertRegex(result, r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$")
+        self.assertEqual(result, "2024-08-15 12:30:45")
 
 
 if __name__ == "__main__":
