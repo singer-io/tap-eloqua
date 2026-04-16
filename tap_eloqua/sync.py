@@ -21,17 +21,6 @@ MIN_RETRY_INTERVAL = 2 # 2 seconds
 MAX_RETRY_INTERVAL = 300 # 5 minutes
 MAX_RETRY_ELAPSED_TIME = 21600 # 6 hours
 
-def _to_eloqua_datetime(dt):
-    """Convert a date string or pendulum DateTime to the format expected by Eloqua
-    API filter expressions (``YYYY-MM-DD HH:MM:SS``).
-
-    Using an explicit ``.format()`` call instead of the deprecated
-    ``.to_datetime_string()`` guards against Pendulum 2→3 behavioural differences.
-    """
-    if isinstance(dt, str):
-        dt = pendulum.parse(dt)
-    return dt.format('YYYY-MM-DD HH:mm:ss')
-
 def next_sleep_interval(previous_sleep_interval):
     min_interval = previous_sleep_interval or MIN_RETRY_INTERVAL
     max_interval = previous_sleep_interval * 2 or MIN_RETRY_INTERVAL
@@ -168,7 +157,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
 
     last_bookmark = get_bulk_bookmark(state, stream_name)
     last_date_raw = last_bookmark.get('datetime', start_date)
-    last_date = _to_eloqua_datetime(last_date_raw)
+    last_date = pendulum.parse(last_date_raw).to_datetime_string()
     last_sync_id = last_bookmark.get('sync_id')
     last_offset = last_bookmark.get('offset')
 
@@ -212,7 +201,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
     _filter = "'{{" + language_obj + "." + updated_at_field + "}}' >= '" + last_date + "'"
 
     if end_date:
-        _filter += " AND '{{" + language_obj + "." + updated_at_field + "}}' < '" + _to_eloqua_datetime(end_date) + "'"
+        _filter += " AND '{{" + language_obj + "." + updated_at_field + "}}' < '" + end_date.to_datetime_string() + "'"
 
     if activity_type is not None:
         _filter += " AND '{{Activity.Type}}' = '" + activity_type + "'"
@@ -240,7 +229,7 @@ def sync_bulk_obj(client, catalog, state, start_date, stream_name, bulk_page_siz
         log_string = "{} - Creating bulk export from {}".format(stream_name,
                                                                 last_date)
         if end_date:
-            log_string += " to {}".format(_to_eloqua_datetime(end_date))
+            log_string += " to {}".format(end_date.to_datetime_string())
         LOGGER.info(log_string)
 
         data = client.post(
@@ -319,7 +308,7 @@ def sync_static_endpoint(client, catalog, state, start_date, stream_id, path, up
     write_schema(catalog, stream_id)
 
     last_date_raw = get_bookmark(state, stream_id, start_date)
-    last_date = _to_eloqua_datetime(last_date_raw)
+    last_date = pendulum.parse(last_date_raw).to_datetime_string()
     search = "{}>='{}'".format(updated_at_col, last_date)
 
     page = 1
