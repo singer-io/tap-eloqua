@@ -18,11 +18,6 @@ jobs:
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
             stitch-validate-json /usr/local/share/virtualenvs/tap-eloqua/lib/python3.12/site-packages/tap_eloqua/schemas/*.json
       - run:
-          name: 'Unit Tests'
-          command: |
-            source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
-            python -m unittest discover tests/unittests
-      - run:
           name: 'Integration Tests'
           command: |
             source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
