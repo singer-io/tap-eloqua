@@ -18,9 +18,19 @@ jobs:
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
             stitch-validate-json /usr/local/share/virtualenvs/tap-eloqua/lib/python3.12/site-packages/tap_eloqua/schemas/*.json
       - run:
-          name: 'Integration Tests'
+          name: 'Pylint'
           command: |
             source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
+            pylint tap_eloqua --disable=C,R,W
+      - run:
+          name: 'Unit Tests'
+          command: |
+            source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
+            python -m unittest discover -s tests/unittests -p 'test_*.py' --top-level-directory .
+      - run:
+          name: 'Integration Tests'
+          command: |
+            source /usr/local/share/virtualenvs/tap-tester/bin/activate
             python -m unittest discover -s tests -p 'test_*.py' --top-level-directory .
 
 workflows:
