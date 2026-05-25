@@ -1,0 +1,222 @@
+"""Unit tests for tap_eloqua discover module and check_stream_access helper."""
+import unittest
+from unittest.mock import MagicMock, patch
+from requests.exceptions import HTTPError
+from requests import Response
+
+from tap_eloqua.utils import check_stream_access
+from tap_eloqua.discover import (
+    _check_stream_access,
+    _EloquaAuthError,
+    _is_auth_http_error,
+    STATIC_STREAM_PROBE_PATHS,
+    discover,
+)
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _make_http_error(status_code):
+    """Build a requests.HTTPError with a stubbed response."""
+    resp = MagicMock(spec=Response)
+    resp.status_code = status_code
+    err = HTTPError(response=resp)
+    return err
+
+
+# ---------------------------------------------------------------------------
+# check_stream_access (shared helper in tap_eloqua.utils)
+# ---------------------------------------------------------------------------
+
+class TestCheckStreamAccess(unittest.TestCase):
+    """Tests for the shared check_stream_access helper in tap_eloqua.utils."""
+
+    def test_returns_true_when_probe_succeeds(self):
+        result = check_stream_access(
+            "campaigns",
+            probe_fn=lambda: None,
+            auth_error_types=_EloquaAuthError,
+        )
+        self.assertTrue(result)
+
+    def test_returns_false_on_auth_error(self):
+        def _raise():
+            raise _EloquaAuthError("auth failed")
+
+        result = check_stream_access(
+            "campaigns",
+            probe_fn=_raise,
+            auth_error_types=_EloquaAuthError,
+        )
+        self.assertFalse(result)
+
+    def test_re_raises_non_auth_error_when_fallback_false(self):
+        def _raise():
+            raise RuntimeError("unexpected")
+
+        with self.assertRaises(RuntimeError):
+            check_stream_access(
+                "campaigns",
+                probe_fn=_raise,
+                auth_error_types=_EloquaAuthError,
+                fallback_accessible=False,
+            )
+
+    def test_returns_true_on_non_auth_error_when_fallback_true(self):
+        def _raise():
+            raise RuntimeError("400 Bad Request")
+
+        result = check_stream_access(
+            "campaigns",
+            probe_fn=_raise,
+            auth_error_types=_EloquaAuthError,
+            fallback_accessible=True,
+        )
+        self.assertTrue(result)
+
+
+# ---------------------------------------------------------------------------
+# _is_auth_http_error
+# ---------------------------------------------------------------------------
+
+class TestIsAuthHttpError(unittest.TestCase):
+
+    def test_returns_true_for_401(self):
+        self.assertTrue(_is_auth_http_error(_make_http_error(401)))
+
+    def test_returns_true_for_403(self):
+        self.assertTrue(_is_auth_http_error(_make_http_error(403)))
+
+    def test_returns_false_for_404(self):
+        self.assertFalse(_is_auth_http_error(_make_http_error(404)))
+
+    def test_returns_false_for_500(self):
+        self.assertFalse(_is_auth_http_error(_make_http_error(500)))
+
+    def test_returns_false_when_response_is_none(self):
+        err = HTTPError()
+        err.response = None
+        self.assertFalse(_is_auth_http_error(err))
+
+
+# ---------------------------------------------------------------------------
+# _check_stream_access (tap-specific wrapper)
+# ---------------------------------------------------------------------------
+
+class TestEloquaCheckStreamAccess(unittest.TestCase):
+    """Tests for the tap-eloqua _check_stream_access wrapper in discover.py."""
+
+    def test_returns_true_when_client_succeeds(self):
+        client = MagicMock()
+        result = _check_stream_access(client, "campaigns", "/api/REST/2.0/assets/campaigns")
+        self.assertTrue(result)
+        client.get.assert_called_once()
+
+    def test_returns_false_on_401(self):
+        client = MagicMock()
+        client.get.side_effect = _make_http_error(401)
+        result = _check_stream_access(client, "campaigns", "/api/REST/2.0/assets/campaigns")
+        self.assertFalse(result)
+
+    def test_returns_false_on_403(self):
+        client = MagicMock()
+        client.get.side_effect = _make_http_error(403)
+        result = _check_stream_access(client, "visitors", "/api/REST/2.0/data/visitors")
+        self.assertFalse(result)
+
+    def test_re_raises_non_auth_http_error(self):
+        """HTTPError with status other than 401/403 should propagate."""
+        client = MagicMock()
+        client.get.side_effect = _make_http_error(500)
+        with self.assertRaises(HTTPError):
+            _check_stream_access(client, "campaigns", "/api/REST/2.0/assets/campaigns")
+
+    def test_probe_passes_count_param(self):
+        """Verifies the probe uses count=1 for minimal data."""
+        client = MagicMock()
+        _check_stream_access(client, "emails", "/api/REST/2.0/assets/emails")
+        call_kwargs = client.get.call_args
+        params = call_kwargs.kwargs.get("params") or call_kwargs[0][1] if call_kwargs[0] else {}
+        self.assertEqual(params.get("count"), 1)
+
+
+# ---------------------------------------------------------------------------
+# discover()
+# ---------------------------------------------------------------------------
+
+class TestDiscover(unittest.TestCase):
+    """Tests for the discover() function in tap_eloqua.discover."""
+
+    _STATIC_STREAMS = list(STATIC_STREAM_PROBE_PATHS.keys())
+    _DYNAMIC_STREAMS = ["contacts", "accounts", "activity_email_open"]
+
+    def _all_stream_names(self):
+        return self._STATIC_STREAMS + self._DYNAMIC_STREAMS
+
+    def _mock_schemas(self, stream_names):
+        schemas = {n: {"type": "object", "properties": {}} for n in stream_names}
+        meta = {n: [] for n in stream_names}
+        return schemas, meta
+
+    @patch("tap_eloqua.discover._check_stream_access")
+    @patch("tap_eloqua.discover.get_schemas")
+    def test_static_streams_probed_dynamic_streams_not(self, mock_get_schemas, mock_check):
+        """_check_stream_access is called only for static streams (not dynamic)."""
+        all_names = self._all_stream_names()
+        mock_get_schemas.return_value = self._mock_schemas(all_names)
+        mock_check.return_value = True
+
+        client = MagicMock()
+        discover(client)
+
+        checked_streams = {call.args[1] for call in mock_check.call_args_list}
+        self.assertEqual(checked_streams, set(self._STATIC_STREAMS))
+        for dyn in self._DYNAMIC_STREAMS:
+            self.assertNotIn(dyn, checked_streams)
+
+    @patch("tap_eloqua.discover._check_stream_access")
+    @patch("tap_eloqua.discover.get_schemas")
+    def test_inaccessible_static_stream_excluded(self, mock_get_schemas, mock_check):
+        """A static stream returning False is excluded from the catalog."""
+        all_names = self._all_stream_names()
+        mock_get_schemas.return_value = self._mock_schemas(all_names)
+        blocked = "campaigns"
+        mock_check.side_effect = lambda client, name, path: name != blocked
+
+        client = MagicMock()
+        catalog = discover(client)
+        returned = {s.tap_stream_id for s in catalog.streams}
+        self.assertNotIn(blocked, returned)
+
+    @patch("tap_eloqua.discover._check_stream_access")
+    @patch("tap_eloqua.discover.get_schemas")
+    def test_dynamic_streams_always_included(self, mock_get_schemas, mock_check):
+        """Dynamic streams bypass the access check and are always in the catalog."""
+        all_names = self._all_stream_names()
+        mock_get_schemas.return_value = self._mock_schemas(all_names)
+        mock_check.return_value = False  # all static streams blocked
+
+        client = MagicMock()
+        catalog = discover(client)
+        returned = {s.tap_stream_id for s in catalog.streams}
+        for dyn in self._DYNAMIC_STREAMS:
+            self.assertIn(dyn, returned)
+
+    @patch("tap_eloqua.discover._check_stream_access")
+    @patch("tap_eloqua.discover.get_schemas")
+    def test_all_static_inaccessible_keeps_dynamic(self, mock_get_schemas, mock_check):
+        """When all static streams are blocked, only dynamic streams remain."""
+        all_names = self._all_stream_names()
+        mock_get_schemas.return_value = self._mock_schemas(all_names)
+        mock_check.return_value = False
+
+        client = MagicMock()
+        catalog = discover(client)
+        returned = {s.tap_stream_id for s in catalog.streams}
+        self.assertEqual(returned, set(self._DYNAMIC_STREAMS))
+
+
+if __name__ == "__main__":
+    unittest.main()
