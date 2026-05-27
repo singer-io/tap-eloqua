@@ -137,9 +137,9 @@ class TestEloquaCheckStreamAccess(unittest.TestCase):
         """Verifies the probe uses count=1 for minimal data."""
         client = MagicMock()
         _check_stream_access(client, "emails", "/api/REST/2.0/assets/emails")
-        call_kwargs = client.get.call_args
-        params = call_kwargs.kwargs.get("params") or call_kwargs[0][1] if call_kwargs[0] else {}
-        self.assertEqual(params.get("count"), 1)
+        call_kwargs = client.get.call_args.kwargs
+        self.assertIn("params", call_kwargs)
+        self.assertEqual(call_kwargs["params"].get("count"), 1)
 
 
 # ---------------------------------------------------------------------------

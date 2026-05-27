@@ -1,11 +1,8 @@
-import singer
 from requests.exceptions import HTTPError
 from singer.catalog import Catalog, CatalogEntry, Schema
 
 from tap_eloqua.schema import get_schemas, get_pk
 from tap_eloqua.utils import check_stream_access
-
-LOGGER = singer.get_logger()
 
 # Static streams load schemas from local JSON files — no API call is made during
 # get_schemas(). Map each to a lightweight probe path to verify access at discovery time.
