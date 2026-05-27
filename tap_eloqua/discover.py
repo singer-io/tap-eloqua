@@ -3,16 +3,13 @@ from singer.catalog import Catalog, CatalogEntry, Schema
 
 from tap_eloqua.schema import get_schemas, get_pk
 from tap_eloqua.utils import check_stream_access
+from tap_eloqua.constants import STATIC_ENDPOINTS
 
-# Static streams load schemas from local JSON files — no API call is made during
-# get_schemas(). Map each to a lightweight probe path to verify access at discovery time.
+# Derive probe paths from the shared STATIC_ENDPOINTS constant.
+# Each path is prefixed with the REST API base to form a full probe URL.
 STATIC_STREAM_PROBE_PATHS = {
-    'visitors':    '/api/REST/2.0/data/visitors',
-    'campaigns':   '/api/REST/2.0/assets/campaigns',
-    'emails':      '/api/REST/2.0/assets/emails',
-    'forms':       '/api/REST/2.0/assets/forms',
-    'assets':      '/api/REST/2.0/assets/externals',
-    'emailGroups': '/api/REST/2.0/assets/email/groups',
+    ep['stream_id']: f"/api/REST/2.0/{ep['path']}"
+    for ep in STATIC_ENDPOINTS
 }
 
 
