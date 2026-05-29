@@ -15,62 +15,24 @@ STATIC_STREAM_PROBE_PATHS = {
 }
 
 
-def check_stream_access(stream_name, probe_fn, auth_error_types, fallback_accessible=False):
-    """
-    Probe a stream endpoint and return True if accessible, False on auth error.
-
-    :param stream_name: Used in log messages.
-    :param probe_fn: Zero-argument callable that performs the API probe.
-    :param auth_error_types: Exception type(s) indicating 401/403 — returns False.
-    :param fallback_accessible: If True, non-auth errors (e.g. 400 from minimal
-                                probe params) are treated as auth-OK and return True.
-                                If False (default), they are re-raised.
-    """
-    try:
-        probe_fn()
-        LOGGER.info("Stream '%s' is accessible.", stream_name)
-        return True
-    except auth_error_types:
-        LOGGER.warning(
-            "Stream '%s' is not accessible with the provided credentials.",
-            stream_name,
-        )
-        return False
-    except Exception:  # pylint: disable=broad-except
-        if fallback_accessible:
-            LOGGER.info("Stream '%s' endpoint reachable (auth OK).", stream_name)
-            return True
-        raise
-
-
 def _is_auth_http_error(exc):
     """Returns True if an HTTPError indicates a 401/403 response."""
     return exc.response is not None and exc.response.status_code in (401, 403)
 
 
-class _EloquaAuthError(Exception):
-    """Sentinel raised when an HTTPError is a 401/403 to fit the standard checker."""
-
-
-def _check_stream_access(client, stream_name, probe_path):
+def check_stream_access(client, probe_path, stream_name) -> bool:
     """
     Probes a static stream's REST endpoint with count=1 to verify the
     credentials have access. Returns True if accessible, False on 401/403.
     Any other HTTP error is re-raised.
     """
-    def _probe():
-        try:
-            client.get(probe_path, params={'count': 1}, endpoint=stream_name)
-        except HTTPError as exc:
-            if _is_auth_http_error(exc):
-                raise _EloquaAuthError() from exc
-            raise
-
-    return check_stream_access(
-        stream_name,
-        probe_fn=_probe,
-        auth_error_types=_EloquaAuthError,
-    )
+    try:
+        client.get(probe_path, params={'count': 1}, endpoint=stream_name)
+        return True
+    except HTTPError as exc:
+        if _is_auth_http_error(exc):
+            return False
+        raise
 
 
 def discover(client):
@@ -82,7 +44,11 @@ def discover(client):
 
     for stream_name, schema_dict in schemas.items():
         if stream_name in STATIC_STREAM_PROBE_PATHS:
-            if not _check_stream_access(client, stream_name, STATIC_STREAM_PROBE_PATHS[stream_name]):
+            if not check_stream_access(client, STATIC_STREAM_PROBE_PATHS[stream_name], stream_name):
+                LOGGER.warning(
+                    "Stream '%s' will be excluded from the catalog due to insufficient permissions.",
+                    stream_name,
+                )
                 continue
 
         schema = Schema.from_dict(schema_dict)
