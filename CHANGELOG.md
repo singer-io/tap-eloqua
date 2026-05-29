@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.4.0] 2026-05-26
+## [1.4.0] 2026-05-29
 - Added per-stream access checks during discovery; static streams returning auth errors are excluded from the catalog
 
 ## [1.3.1] 2025-06-23

@@ -65,8 +65,7 @@ def discover(client):
 
     if not catalog.streams:
         raise Exception(
-            "No stream endpoints are accessible with the provided credentials. "
-            "Verify that the API credentials have the required permissions."
+            "The credentials do not have read access to any of the supported streams."
         )
 
     return catalog
