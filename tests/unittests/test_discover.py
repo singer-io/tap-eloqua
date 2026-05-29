@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 from requests.exceptions import HTTPError
 from requests import Response
 
-from tap_eloqua.utils import check_stream_access
 from tap_eloqua.discover import (
+    check_stream_access,
     _check_stream_access,
     _EloquaAuthError,
     _is_auth_http_error,
@@ -31,7 +31,7 @@ def _make_http_error(status_code):
 # ---------------------------------------------------------------------------
 
 class TestCheckStreamAccess(unittest.TestCase):
-    """Tests for the shared check_stream_access helper in tap_eloqua.utils."""
+    """Tests for the shared check_stream_access helper in tap_eloqua.discover."""
 
     def test_returns_true_when_probe_succeeds(self):
         result = check_stream_access(
@@ -216,6 +216,19 @@ class TestDiscover(unittest.TestCase):
         catalog = discover(client)
         returned = {s.tap_stream_id for s in catalog.streams}
         self.assertEqual(returned, set(self._DYNAMIC_STREAMS))
+
+    @patch("tap_eloqua.discover._check_stream_access")
+    @patch("tap_eloqua.discover.get_schemas")
+    def test_raises_when_catalog_is_empty(self, mock_get_schemas, mock_check):
+        """discover() raises Exception when no streams are accessible (empty catalog)."""
+        # Only static streams returned — all blocked, so catalog would be empty.
+        mock_get_schemas.return_value = self._mock_schemas(self._STATIC_STREAMS)
+        mock_check.return_value = False
+
+        client = MagicMock()
+        with self.assertRaises(Exception) as ctx:
+            discover(client)
+        self.assertIn("No stream endpoints are accessible", str(ctx.exception))
 
 
 if __name__ == "__main__":
