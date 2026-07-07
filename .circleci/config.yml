@@ -8,7 +8,7 @@ jobs:
       - run:
           name: 'Setup virtual env'
           command: |
-            uv venv --python 3.9 /usr/local/share/virtualenvs/tap-eloqua
+            uv venv --python 3.12 /usr/local/share/virtualenvs/tap-eloqua
             source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
             uv pip install -U pip setuptools
             uv pip install .[dev]
@@ -16,7 +16,23 @@ jobs:
           name: 'JSON Validator'
           command: |
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
-            stitch-validate-json /usr/local/share/virtualenvs/tap-eloqua/lib/python3.9/site-packages/tap_eloqua/schemas/*.json
+            stitch-validate-json /usr/local/share/virtualenvs/tap-eloqua/lib/python3.12/site-packages/tap_eloqua/schemas/*.json
+      - run:
+          name: 'Pylint'
+          command: |
+            source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
+            pylint tap_eloqua --disable=C,R,W
+      - run:
+          name: 'Unit Tests'
+          command: |
+            source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
+            python -m unittest discover -s tests/unittests -p 'test_*.py' --top-level-directory .
+      - run:
+          name: 'Integration Tests'
+          command: |
+            source /usr/local/share/virtualenvs/tap-tester/bin/activate
+            python -m unittest discover -s tests -p 'test_*.py' --top-level-directory .
+
 workflows:
   version: 2
   commit:

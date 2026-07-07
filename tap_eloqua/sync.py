@@ -379,6 +379,7 @@ def sync_activity_stream(client,
     finished = False
     sync_start = pendulum.now('UTC')
     end_date = sync_start
+    last_date = pendulum.parse(start_date)
     while not finished:
         try:
             # Get latest bookmark to adjust time window from, if needed

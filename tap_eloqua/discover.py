@@ -1,6 +1,7 @@
 from requests.exceptions import HTTPError
 import singer
 from singer.catalog import Catalog, CatalogEntry, Schema
+from singer import metadata as mdata  # minimal addition
 
 from tap_eloqua.schema import get_schemas, get_pk
 from tap_eloqua.constants import STATIC_ENDPOINTS
@@ -52,20 +53,28 @@ def discover(client):
                 continue
 
         schema = Schema.from_dict(schema_dict)
-        mdata = field_metadata[stream_name]
+        properties = schema_dict.get("properties", {})
+        replication_key = next(
+            (k for k in properties if k.lower() == "updatedat"),
+            None
+        )
+        replication_method = "INCREMENTAL" if replication_key else "FULL_TABLE"
+        md_list = field_metadata[stream_name]
+        m = mdata.to_map(md_list)
+        m = mdata.write(m, (), 'forced-replication-method', replication_method)
+        md_list = mdata.to_list(m)
         pk = get_pk(stream_name)
-
         catalog.streams.append(CatalogEntry(
             stream=stream_name,
             tap_stream_id=stream_name,
             key_properties=pk,
             schema=schema,
-            metadata=mdata
+            metadata=md_list
         ))
 
     if not catalog.streams:
         raise Exception(
-            "The credentials do not have read access to any of the supported streams."
+            "No stream endpoints are accessible with the provided credentials."
         )
 
     return catalog
