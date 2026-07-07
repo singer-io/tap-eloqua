@@ -36,22 +36,40 @@ def check_stream_access(client, probe_path, stream_name) -> bool:
         raise
 
 
+def _apply_access_checks(client, schemas: dict, field_metadata: dict) -> None:
+    """Probe static streams for read access and exclude inaccessible streams in place."""
+    inaccessible_streams = [
+        stream_name
+        for stream_name in list(schemas.keys())
+        if stream_name in STATIC_STREAM_PROBE_PATHS
+        and not check_stream_access(client, STATIC_STREAM_PROBE_PATHS[stream_name], stream_name)
+    ]
+
+    for stream_name in inaccessible_streams:
+        schemas.pop(stream_name, None)
+        field_metadata.pop(stream_name, None)
+
+    if not schemas:
+        raise Exception(
+            "No stream endpoints are accessible with the provided credentials."
+        )
+
+    if inaccessible_streams:
+        LOGGER.warning(
+            "No read access to stream(s): %s. Excluded from catalog.",
+            ", ".join(inaccessible_streams),
+        )
+
+
 def discover(client):
     # get_schemas() makes API calls for bulk, activity, and custom-object streams,
     # so access for those is implicitly verified here. Only static streams need an
     # explicit probe since their schemas are loaded from local files.
     schemas, field_metadata = get_schemas(client)
+    _apply_access_checks(client, schemas, field_metadata)
     catalog = Catalog([])
 
     for stream_name, schema_dict in schemas.items():
-        if stream_name in STATIC_STREAM_PROBE_PATHS:
-            if not check_stream_access(client, STATIC_STREAM_PROBE_PATHS[stream_name], stream_name):
-                LOGGER.warning(
-                    "Stream '%s' will be excluded from the catalog due to insufficient permissions.",
-                    stream_name,
-                )
-                continue
-
         schema = Schema.from_dict(schema_dict)
         properties = schema_dict.get("properties", {})
         replication_key = next(
@@ -71,10 +89,5 @@ def discover(client):
             schema=schema,
             metadata=md_list
         ))
-
-    if not catalog.streams:
-        raise Exception(
-            "No stream endpoints are accessible with the provided credentials."
-        )
 
     return catalog

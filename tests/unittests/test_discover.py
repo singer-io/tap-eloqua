@@ -7,6 +7,7 @@ from requests import Response
 from tap_eloqua.discover import (
     check_stream_access,
     _is_auth_http_error,
+    _apply_access_checks,
     STATIC_STREAM_PROBE_PATHS,
     discover,
 )
@@ -100,6 +101,29 @@ class TestDiscover(unittest.TestCase):
         schemas = {n: {"type": "object", "properties": {}} for n in stream_names}
         meta = {n: [] for n in stream_names}
         return schemas, meta
+
+    @patch("tap_eloqua.discover.check_stream_access")
+    def test_apply_access_checks_excludes_inaccessible_static_streams(self, mock_check):
+        names = self._all_stream_names()
+        schemas, field_metadata = self._mock_schemas(names)
+        blocked = "campaigns"
+        mock_check.side_effect = lambda client, path, name: name != blocked
+
+        _apply_access_checks(MagicMock(), schemas, field_metadata)
+
+        self.assertNotIn(blocked, schemas)
+        self.assertNotIn(blocked, field_metadata)
+        for dyn in self._DYNAMIC_STREAMS:
+            self.assertIn(dyn, schemas)
+
+    @patch("tap_eloqua.discover.check_stream_access", return_value=False)
+    def test_apply_access_checks_raises_when_no_streams_remain(self, _mock_check):
+        schemas, field_metadata = self._mock_schemas(self._STATIC_STREAMS)
+
+        with self.assertRaises(Exception) as ctx:
+            _apply_access_checks(MagicMock(), schemas, field_metadata)
+
+        self.assertIn("No stream endpoints are accessible", str(ctx.exception))
 
     @patch("tap_eloqua.discover.check_stream_access")
     @patch("tap_eloqua.discover.get_schemas")
