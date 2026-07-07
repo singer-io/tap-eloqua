@@ -50,9 +50,39 @@ class TestDiscoverUnit(unittest.TestCase):
 
         self.assertEqual(accounts_md.get("forced-replication-method"), "INCREMENTAL")
         self.assertEqual(visitors_md.get("forced-replication-method"), "FULL_TABLE")
+        self.assertEqual(accounts_md.get("valid-replication-keys"), ["UpdatedAt"])
+        self.assertEqual(visitors_md.get("valid-replication-keys"), [])
 
         self.assertEqual(stream_map["accounts"].key_properties, ["Id"])
         self.assertEqual(stream_map["visitors"].key_properties, [])
+
+    @patch("tap_eloqua.discover.get_pk", return_value=[])
+    @patch("tap_eloqua.discover.get_schemas")
+    def test_discover_sets_parent_stream_metadata_for_activity_streams(self, mock_get_schemas, mock_get_pk):
+        schemas = {
+            "activity_email_open": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "Id": {"type": "string"},
+                    "CreatedAt": {"type": "string", "format": "date-time"},
+                },
+            },
+        }
+        field_metadata = {
+            "activity_email_open": [
+                {"breadcrumb": [], "metadata": {}},
+                {"breadcrumb": ["properties", "Id"], "metadata": {"inclusion": "automatic"}},
+            ],
+        }
+
+        mock_get_schemas.return_value = (schemas, field_metadata)
+
+        catalog = discover(MagicMock())
+        activity = next(stream for stream in catalog.streams if stream.stream == "activity_email_open")
+        md_map = mdata.to_map(activity.metadata)
+
+        self.assertEqual(md_map[()].get("parent-stream-id"), "contacts")
 
     @patch("tap_eloqua.discover.get_pk", return_value=["Id"])
     @patch("tap_eloqua.discover.get_schemas")

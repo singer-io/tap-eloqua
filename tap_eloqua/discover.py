@@ -15,6 +15,18 @@ STATIC_STREAM_PROBE_PATHS = {
     for ep in STATIC_ENDPOINTS
 }
 
+PARENT_STREAM_MAP = {
+    "activity_email_open": "contacts",
+    "activity_email_clickthrough": "contacts",
+    "activity_email_send": "contacts",
+    "activity_subscribe": "contacts",
+    "activity_unsubscribe": "contacts",
+    "activity_bounceback": "contacts",
+    "activity_web_visit": "contacts",
+    "activity_page_view": "contacts",
+    "activity_form_submit": "contacts",
+}
+
 
 def _is_auth_http_error(exc):
     """Returns True if an HTTPError indicates a 401/403 response."""
@@ -77,9 +89,13 @@ def discover(client):
             None
         )
         replication_method = "INCREMENTAL" if replication_key else "FULL_TABLE"
+        valid_replication_keys = [replication_key] if replication_key else []
         md_list = field_metadata[stream_name]
         m = mdata.to_map(md_list)
         m = mdata.write(m, (), 'forced-replication-method', replication_method)
+        m = mdata.write(m, (), 'valid-replication-keys', valid_replication_keys)
+        if stream_name in PARENT_STREAM_MAP:
+            m = mdata.write(m, (), 'parent-stream-id', PARENT_STREAM_MAP[stream_name])
         md_list = mdata.to_list(m)
         pk = get_pk(stream_name)
         catalog.streams.append(CatalogEntry(

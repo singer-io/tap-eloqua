@@ -105,7 +105,7 @@ class EloquaBaseTest(unittest.TestCase):
             },
             # Static REST endpoints
             "visitors": {
-                cls.PRIMARY_KEYS: set(),
+                cls.PRIMARY_KEYS: {"id"},
                 cls.REPLICATION_METHOD: "FULL_TABLE",
                 cls.REPLICATION_KEYS: set(),
                 cls.OBEYS_START_DATE: True,
