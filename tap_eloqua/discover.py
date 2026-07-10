@@ -46,6 +46,11 @@ def check_stream_access(client, probe_path, stream_name) -> bool:
         return True
     except HTTPError as exc:
         if _is_auth_http_error(exc):
+            LOGGER.warning(
+                    "Permission Error: Stream '%s' - %s",
+                    stream_name,
+                    exc,
+                )
             return False
         raise
 
@@ -86,7 +91,7 @@ def _apply_access_checks(client, schemas: dict, field_metadata: dict) -> None:
 
     if inaccessible_streams:
         LOGGER.warning(
-            "No read access to stream(s): %s. Excluded from catalog.",
+            "Unauthorized streams excluded from catalog: %s",
             ", ".join(inaccessible_streams),
         )
 
@@ -101,6 +106,7 @@ def discover(client):
 
     for stream_name, schema_dict in schemas.items():
         schema = Schema.from_dict(schema_dict)
+        pk = get_pk(stream_name)
         properties = schema_dict.get("properties", {})
         replication_key = next(
             (k for k in properties if k.lower() == "updatedat"),
@@ -110,16 +116,17 @@ def discover(client):
         valid_replication_keys = [replication_key] if replication_key else []
         md_list = field_metadata[stream_name]
         m = mdata.to_map(md_list)
+        m = mdata.write(m, (), 'table-key-properties', pk)
         m = mdata.write(m, (), 'forced-replication-method', replication_method)
         m = mdata.write(m, (), 'valid-replication-keys', valid_replication_keys)
         if stream_name in PARENT_STREAM_MAP:
             m = mdata.write(m, (), 'parent-stream-id', PARENT_STREAM_MAP[stream_name])
         md_list = mdata.to_list(m)
-        pk = get_pk(stream_name)
+        key_properties = mdata.to_map(md_list).get((), {}).get('table-key-properties', [])
         catalog.streams.append(CatalogEntry(
             stream=stream_name,
             tap_stream_id=stream_name,
-            key_properties=pk,
+            key_properties=key_properties,
             schema=schema,
             metadata=md_list
         ))
