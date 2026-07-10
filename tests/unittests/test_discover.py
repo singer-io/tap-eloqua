@@ -116,6 +116,22 @@ class TestDiscover(unittest.TestCase):
         for dyn in self._DYNAMIC_STREAMS:
             self.assertIn(dyn, schemas)
 
+    @patch("tap_eloqua.discover.PARENT_STREAM_MAP", {"activity_email_open": "campaigns"})
+    @patch("tap_eloqua.discover.check_stream_access")
+    def test_apply_access_checks_excludes_child_streams_of_inaccessible_parent(self, mock_check):
+        names = self._all_stream_names()
+        schemas, field_metadata = self._mock_schemas(names)
+        blocked_parent = "campaigns"
+        blocked_child = "activity_email_open"
+        mock_check.side_effect = lambda client, path, name: name != blocked_parent
+
+        _apply_access_checks(MagicMock(), schemas, field_metadata)
+
+        self.assertNotIn(blocked_parent, schemas)
+        self.assertNotIn(blocked_child, schemas)
+        self.assertNotIn(blocked_parent, field_metadata)
+        self.assertNotIn(blocked_child, field_metadata)
+
     @patch("tap_eloqua.discover.check_stream_access", return_value=False)
     def test_apply_access_checks_raises_when_no_streams_remain(self, _mock_check):
         schemas, field_metadata = self._mock_schemas(self._STATIC_STREAMS)

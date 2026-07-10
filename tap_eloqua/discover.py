@@ -15,6 +15,8 @@ STATIC_STREAM_PROBE_PATHS = {
     for ep in STATIC_ENDPOINTS
 }
 
+#They are treated as children of contacts by data model linkage,
+# not by URL nesting.
 PARENT_STREAM_MAP = {
     "activity_email_open": "contacts",
     "activity_email_clickthrough": "contacts",
@@ -48,6 +50,15 @@ def check_stream_access(client, probe_path, stream_name) -> bool:
         raise
 
 
+def _get_child_streams(parent_stream, schemas):
+    """Return mapped child streams that exist in discovered schemas."""
+    return [
+        child_stream
+        for child_stream, mapped_parent in PARENT_STREAM_MAP.items()
+        if mapped_parent == parent_stream and child_stream in schemas
+    ]
+
+
 def _apply_access_checks(client, schemas: dict, field_metadata: dict) -> None:
     """Probe static streams for read access and exclude inaccessible streams in place."""
     inaccessible_streams = [
@@ -56,6 +67,13 @@ def _apply_access_checks(client, schemas: dict, field_metadata: dict) -> None:
         if stream_name in STATIC_STREAM_PROBE_PATHS
         and not check_stream_access(client, STATIC_STREAM_PROBE_PATHS[stream_name], stream_name)
     ]
+
+    child_streams_to_exclude = []
+    for stream_name in inaccessible_streams:
+        child_streams_to_exclude.extend(_get_child_streams(stream_name, schemas))
+
+    inaccessible_streams.extend(child_streams_to_exclude)
+    inaccessible_streams = list(dict.fromkeys(inaccessible_streams))
 
     for stream_name in inaccessible_streams:
         schemas.pop(stream_name, None)
