@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
+from datetime import datetime, timezone
 
 from singer.catalog import Catalog
 
@@ -149,11 +150,11 @@ class TestSyncHelpersUnit(unittest.TestCase):
         mock_update_current_stream,
         mock_sync_bulk_obj,
     ):
-        sync_start = pendulum.datetime(2024, 1, 2, 0, 0, 0, tz="UTC")
+        sync_start = datetime(2024, 1, 2, 0, 0, 0, tzinfo=timezone.utc)
         mock_now.return_value = sync_start
         mock_parse.side_effect = [
-            pendulum.datetime(2024, 1, 1, 0, 0, 0, tz="UTC"),
-            pendulum.datetime(2024, 1, 1, 0, 0, 0, tz="UTC"),
+            datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
+            datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
         ]
 
         sync_activity_stream(
