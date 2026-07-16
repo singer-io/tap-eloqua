@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from datetime import datetime, timezone
 
 from singer.catalog import Catalog
 
@@ -81,27 +80,15 @@ class TestSyncHelpersUnit(unittest.TestCase):
         self.assertRegex(result, r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$")
         self.assertEqual(result, "2024-08-15 12:30:45")
 
-    @patch("tap_eloqua.sync.write_bookmark")
     @patch("tap_eloqua.sync.persist_records")
+    @patch("tap_eloqua.sync.singer.write_state")
     @patch("tap_eloqua.sync.singer.write_schema")
-    @patch("tap_eloqua.sync.pendulum.from_timestamp")
-    @patch("tap_eloqua.sync.pendulum.parse")
-    def test_sync_static_endpoint_invokes_pendulum_helpers(
+    def test_sync_static_endpoint_uses_real_pendulum_for_filter_and_bookmark(
         self,
-        mock_parse,
-        mock_from_timestamp,
         mock_write_schema,
+        mock_write_state,
         mock_persist_records,
-        mock_write_bookmark,
     ):
-        parse_dt = MagicMock()
-        parse_dt.to_datetime_string.return_value = "2024-01-01 00:00:00"
-        mock_parse.return_value = parse_dt
-
-        from_ts_dt = MagicMock()
-        from_ts_dt.to_iso8601_string.return_value = "2024-01-01T00:00:00Z"
-        mock_from_timestamp.return_value = from_ts_dt
-
         catalog = Catalog.from_dict(
             {
                 "streams": [
@@ -120,61 +107,58 @@ class TestSyncHelpersUnit(unittest.TestCase):
                 ]
             }
         )
+        state = {}
         client = MagicMock()
         client.get.return_value = {"elements": [{"createdAt": "1704067200"}]}
 
         sync_static_endpoint(
             client=client,
             catalog=catalog,
-            state={},
+            state=state,
             start_date="2024-01-01T00:00:00Z",
             stream_id="visitors",
             path="data/visitors",
             updated_at_col="createdAt",
         )
 
-        mock_parse.assert_called_once_with("2024-01-01T00:00:00Z")
-        mock_from_timestamp.assert_called_once_with(1704067200)
+        _, get_kwargs = client.get.call_args
+        self.assertEqual(get_kwargs["params"]["search"], "createdAt>='2024-01-01 00:00:00'")
+
+        saved_bookmark = state["bookmarks"]["visitors"]
+        self.assertEqual(pendulum.parse(saved_bookmark).int_timestamp, 1704067200)
+
         mock_write_schema.assert_called_once()
+        mock_write_state.assert_called_once()
         mock_persist_records.assert_called_once()
-        mock_write_bookmark.assert_called_once_with({}, "visitors", "2024-01-01T00:00:00Z")
 
     @patch("tap_eloqua.sync.sync_bulk_obj")
     @patch("tap_eloqua.sync.update_current_stream")
-    @patch("tap_eloqua.sync.pendulum.parse")
-    @patch("tap_eloqua.sync.pendulum.now")
-    def test_sync_activity_stream_invokes_pendulum_now_and_parse(
+    def test_sync_activity_stream_passes_timezone_aware_end_date(
         self,
-        mock_now,
-        mock_parse,
         mock_update_current_stream,
         mock_sync_bulk_obj,
     ):
-        sync_start = datetime(2024, 1, 2, 0, 0, 0, tzinfo=timezone.utc)
-        mock_now.return_value = sync_start
-        mock_parse.side_effect = [
-            datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-            datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc),
-        ]
+        state = {"bookmarks": {"emails_sent": {"datetime": "2024-01-01T00:00:00Z"}}}
 
         sync_activity_stream(
             client=MagicMock(),
             stream_name="emails_sent",
-            state={"bookmarks": {"emails_sent": {"datetime": "2024-01-01T00:00:00Z"}}},
+            state=state,
             catalog=MagicMock(),
             start_date="2024-01-01T00:00:00Z",
             bulk_page_size=1000,
             activity_type="EmailSend",
         )
 
-        mock_now.assert_called_once_with("UTC")
-        self.assertEqual(mock_parse.call_count, 2)
-        mock_parse.assert_any_call("2024-01-01T00:00:00Z")
-        mock_update_current_stream.assert_called_once_with(
-            {"bookmarks": {"emails_sent": {"datetime": "2024-01-01T00:00:00Z"}}},
-            "emails_sent",
-        )
+        mock_update_current_stream.assert_called_once_with(state, "emails_sent")
         mock_sync_bulk_obj.assert_called_once()
+
+        end_date = mock_sync_bulk_obj.call_args.kwargs["end_date"]
+        self.assertIsNotNone(end_date.tzinfo)
+        self.assertGreaterEqual(
+            end_date,
+            pendulum.parse(state["bookmarks"]["emails_sent"]["datetime"]),
+        )
 
 
 if __name__ == "__main__":
