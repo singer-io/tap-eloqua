@@ -23,10 +23,26 @@ jobs:
             source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
             pylint tap_eloqua --disable=C,R,W
       - run:
-          name: 'Unit Tests'
+          name: 'Unit Tests & Coverage Run'
           command: |
             source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
-            python -m unittest discover -s tests/unittests -p 'test_*.py' --top-level-directory .
+            uv pip install pytest coverage
+            mkdir -p test_output
+            coverage run -m pytest tests --junitxml=test_output/report.xml
+      - run:
+          name: 'Coverage Report'
+          command: |
+            source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
+            coverage report -m | tee coverage.txt
+            coverage html
+            echo "Coverage summary:"
+            cat coverage.txt
+      - store_test_results:
+          path: test_output/report.xml
+      - store_artifacts:
+          path: htmlcov
+      - store_artifacts:
+          path: coverage.txt
       - run:
           name: 'Integration Tests'
           command: |
