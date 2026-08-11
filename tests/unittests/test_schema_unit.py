@@ -20,7 +20,7 @@ class TestSchemaUnit(unittest.TestCase):
     def test_get_pk_known_streams(self):
         self.assertEqual(get_pk("accounts"), ["Id"])
         self.assertEqual(get_pk("assets"), ["id"])
-        self.assertEqual(get_pk("activity_email_open"), [])
+        self.assertEqual(get_pk("visitors"), ["id"])
 
     def test_get_pk_unknown_stream_defaults_to_id(self):
         self.assertEqual(get_pk("custom_unknown"), ["Id"])

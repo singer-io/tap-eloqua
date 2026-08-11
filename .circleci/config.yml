@@ -26,12 +26,27 @@ jobs:
           name: 'Unit Tests'
           command: |
             source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
-            python -m unittest discover -s tests/unittests -p 'test_*.py' --top-level-directory .
+            uv pip install pytest pytest-cov coverage
+            mkdir -p test_output
+            coverage run --source=tap_eloqua -m pytest tests/unittests -v \
+              --junitxml=test_output/unit-report.xml
       - run:
           name: 'Integration Tests'
           command: |
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
-            python -m unittest discover -s tests -p 'test_*.py' --top-level-directory .
+            source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
+            coverage run --source=tap_eloqua --append -m pytest tests/test_*.py -v \
+              --junitxml=test_output/integration-report.xml
+      - run:
+          name: 'Coverage Report'
+          command: |
+            source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
+            coverage report -m --fail-under=99
+            coverage html
+      - store_test_results:
+          path: test_output
+      - store_artifacts:
+          path: htmlcov
 
 workflows:
   version: 2

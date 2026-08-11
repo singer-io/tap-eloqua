@@ -3,64 +3,123 @@
   "additionalProperties": false,
   "properties": {
     "id": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "type": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "currentStatus": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "name": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "description": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "permissions": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "createdBy": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
     },
     "createdAt": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "updatedBy": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
     },
     "updatedAt": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "accessedAt": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "depth": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "htmlName": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "processingType": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "emailAddressFormFieldId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "submitFailedLandingPageId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "html": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "style": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "elements": {
-      "type":"array",
+      "type": [
+        "null",
+        "array"
+      ],
       "items": {
         "type": "object",
         "additionalProperties": true,
@@ -126,7 +185,10 @@
       }
     },
     "processingSteps": {
-      "type":"array",
+      "type": [
+        "null",
+        "array"
+      ],
       "items": {
         "type": "object",
         "additionalProperties": true,
@@ -183,16 +245,28 @@
       }
     },
     "customCSS": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "defaultKeyFieldMapping": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "folderId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "size": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     }
   }
 }

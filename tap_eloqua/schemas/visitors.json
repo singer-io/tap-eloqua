@@ -3,102 +3,200 @@
   "additionalProperties": false,
   "properties": {
     "type": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "visitorId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "createdAt": {
-      "type": "string"
-    },
-    "contactId": {
-      "type": "string"
-    },
-    "V_IPAddress": {
-      "type": "string"
-    },
-    "V_LastVisitDateAndTime": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
-    "id":{
-      "type": "string"
+    "contactId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "V_IPAddress": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "V_LastVisitDateAndTime": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "id": {
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_Browser_Type": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_CityFromIP": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_CompanyDNSName": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_CompanyNameFromIP1": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_CountryFromIP": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_FirstPageInVisit": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_HostName": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_ISPFromIP": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_LastPageInVisit": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_Name": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_ProvinceFromIP": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_TimeZone": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
     },
     "currentStatus": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "externalId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_CountryName": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_ZipCodeFromIP": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "V_Current_Total_Pages": {
-      "type": "integer"
+      "type": [
+        "null",
+        "integer"
+      ]
     },
     "V_Current_Visit_Length": {
-      "type": "integer"
+      "type": [
+        "null",
+        "integer"
+      ]
     },
     "V_TimeZoneOffsetMin": {
-      "type": "integer"
+      "type": [
+        "null",
+        "integer"
+      ]
     },
     "V_Total_Pages": {
-      "type": "integer"
+      "type": [
+        "null",
+        "integer"
+      ]
     },
     "V_Total_Time": {
-      "type": "integer"
+      "type": [
+        "null",
+        "integer"
+      ]
     },
     "V_Total_Visits": {
-      "type": "integer"
+      "type": [
+        "null",
+        "integer"
+      ]
     },
     "V_FirstVisitDateAndTime": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "V_LatitudeFromIP": {
-      "type": "number"
+      "type": [
+        "null",
+        "number"
+      ]
     },
     "V_LongitudeFromIP": {
-      "type": "number"
+      "type": [
+        "null",
+        "number"
+      ]
     }
   }
 }

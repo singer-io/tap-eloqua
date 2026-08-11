@@ -40,7 +40,7 @@ class TestDiscoverUnit(unittest.TestCase):
         }
 
         mock_get_schemas.return_value = (schemas, field_metadata)
-        mock_get_pk.side_effect = lambda stream_name: ["Id"] if stream_name == "accounts" else []
+        mock_get_pk.side_effect = lambda stream_name: ["Id"] if stream_name == "accounts" else ["id"]
 
         catalog = discover(MagicMock())
         stream_map = {stream.stream: stream for stream in catalog.streams}
@@ -50,9 +50,17 @@ class TestDiscoverUnit(unittest.TestCase):
 
         self.assertEqual(accounts_md.get("forced-replication-method"), "INCREMENTAL")
         self.assertEqual(visitors_md.get("forced-replication-method"), "FULL_TABLE")
+        self.assertEqual(accounts_md.get("replication-method"), "INCREMENTAL")
+        self.assertEqual(visitors_md.get("replication-method"), "FULL_TABLE")
+        self.assertEqual(accounts_md.get("table-key-properties"), ["Id"])
+        self.assertEqual(visitors_md.get("table-key-properties"), ["id"])
+        self.assertEqual(accounts_md.get("valid-replication-keys"), ["UpdatedAt"])
+        self.assertEqual(visitors_md.get("inclusion"), "available")
 
         self.assertEqual(stream_map["accounts"].key_properties, ["Id"])
-        self.assertEqual(stream_map["visitors"].key_properties, [])
+        self.assertEqual(stream_map["visitors"].key_properties, ["id"])
+        self.assertEqual(stream_map["accounts"].replication_key, "UpdatedAt")
+        self.assertIsNone(stream_map["visitors"].replication_key)
 
     @patch("tap_eloqua.discover.get_pk", return_value=["Id"])
     @patch("tap_eloqua.discover.get_schemas")
