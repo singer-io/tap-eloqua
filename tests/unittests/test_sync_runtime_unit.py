@@ -1,4 +1,5 @@
 import unittest
+from itertools import count
 from unittest.mock import MagicMock, patch
 
 import pendulum
@@ -255,7 +256,7 @@ class TestSyncRuntimeUnit(unittest.TestCase):
             {"status": "success"},
             {"items": [{"message": "Successfully exported members to csv file.", "count": 1}]},
         ]
-        mock_time.side_effect = [0, 0, 1, 2]
+        mock_time.side_effect = count(0)
 
         sync_bulk_obj(client, catalog, {}, "2024-01-01T00:00:00Z", "accounts", 500)
         mock_sleep.assert_called_once_with(2)
