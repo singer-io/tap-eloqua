@@ -18,8 +18,7 @@
       "type": [
         "null",
         "string"
-      ],
-      "format": "date-time"
+      ]
     },
     "contactId": {
       "type": [
@@ -116,8 +115,7 @@
       "type": [
         "null",
         "string"
-      ],
-      "format": "date-time"
+      ]
     },
     "currentStatus": {
       "type": [
