@@ -42,8 +42,7 @@
       "type": [
         "null",
         "string"
-      ],
-      "format": "date-time"
+      ]
     },
     "createdAt": {
       "type": [
@@ -56,8 +55,7 @@
       "type": [
         "null",
         "string"
-      ],
-      "format": "date-time"
+      ]
     },
     "updatedAt": {
       "type": [
