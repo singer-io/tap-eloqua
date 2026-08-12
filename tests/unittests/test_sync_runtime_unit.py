@@ -1,5 +1,5 @@
 import unittest
-from itertools import count
+from itertools import chain, count, repeat
 from unittest.mock import MagicMock, patch
 
 import pendulum
@@ -263,17 +263,20 @@ class TestSyncRuntimeUnit(unittest.TestCase):
 
     @patch("tap_eloqua.sync.stream_export", return_value="2024-01-01 00:00:00")
     @patch("tap_eloqua.sync.write_bulk_bookmark")
+    @patch("tap_eloqua.sync.time.sleep")
     @patch("tap_eloqua.sync.time.time")
-    def test_sync_bulk_obj_raises_on_deadline_exceeded(self, mock_time, _mock_write_bulk_bookmark, _mock_stream_export):
+    def test_sync_bulk_obj_raises_on_deadline_exceeded(self, mock_time, _mock_sleep, _mock_write_bulk_bookmark, _mock_stream_export):
         catalog = self._accounts_catalog()
         client = MagicMock()
 
         client.post.side_effect = [{"uri": "/exports/1"}, {"uri": "/syncs/99"}]
         client.get.return_value = {"status": "pending"}
-        mock_time.side_effect = [0, 0, 21601]
+        # start_time=0, second call always exceeds MAX_RETRY_ELAPSED_TIME (21600)
+        mock_time.side_effect = chain([0], repeat(21601))
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(Exception) as error_context:
             sync_bulk_obj(client, catalog, {}, "2024-01-01T00:00:00Z", "accounts", 500)
+        self.assertIn("export deadline exceeded", str(error_context.exception))
 
     @patch("tap_eloqua.sync.stream_export", return_value="2024-01-01 00:00:00")
     @patch("tap_eloqua.sync.write_bulk_bookmark")
