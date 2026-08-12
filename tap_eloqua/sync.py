@@ -14,6 +14,7 @@ from tap_eloqua.schema import (
     get_schemas,
     activity_type_to_stream
 )
+from tap_eloqua.constants import STATIC_ENDPOINTS
 
 LOGGER = singer.get_logger()
 
@@ -378,7 +379,6 @@ def sync_activity_stream(client,
     finished = False
     sync_start = pendulum.now('UTC')
     end_date = sync_start
-    last_date = pendulum.parse(start_date)
     while not finished:
         try:
             # Get latest bookmark to adjust time window from, if needed
@@ -453,40 +453,7 @@ def sync(client, catalog, state, start_date, bulk_page_size):
                           stream_name,
                           bulk_page_size)
 
-    static_endpoints = [
-        {
-            'stream_id': 'visitors',
-            'path': 'data/visitors',
-            'updated_at_col': 'V_LastVisitDateAndTime'
-        },
-        {
-            'stream_id': 'campaigns',
-            'path': 'assets/campaigns',
-            'updated_at_col': 'updatedAt'
-        },
-        {
-            'stream_id': 'emails',
-            'path': 'assets/emails',
-            'updated_at_col': 'updatedAt'
-        },
-        {
-            'stream_id': 'forms',
-            'path': 'assets/forms',
-            'updated_at_col': 'updatedAt'
-        },
-        {
-            'stream_id': 'assets',
-            'path': 'assets/externals',
-            'updated_at_col': 'updatedAt'
-        },
-        {
-            'stream_id': 'emailGroups',
-            'path': 'assets/email/groups',
-            'updated_at_col': 'updatedAt'
-        }        
-    ]
-
-    for static_endpoint in static_endpoints:
+    for static_endpoint in STATIC_ENDPOINTS:
         stream_id = static_endpoint['stream_id']
         should_stream, last_stream = should_sync_stream(selected_streams,
                                                         last_stream,
