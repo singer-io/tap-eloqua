@@ -8,7 +8,7 @@ jobs:
       - run:
           name: 'Setup virtual env'
           command: |
-            uv venv --python 3.9 /usr/local/share/virtualenvs/tap-eloqua
+            uv venv --python 3.12 /usr/local/share/virtualenvs/tap-eloqua
             source /usr/local/share/virtualenvs/tap-eloqua/bin/activate
             uv pip install -U pip setuptools
             uv pip install .[dev]
@@ -16,7 +16,7 @@ jobs:
           name: 'JSON Validator'
           command: |
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
-            stitch-validate-json /usr/local/share/virtualenvs/tap-eloqua/lib/python3.9/site-packages/tap_eloqua/schemas/*.json
+            stitch-validate-json /usr/local/share/virtualenvs/tap-eloqua/lib/python3.12/site-packages/tap_eloqua/schemas/*.json
       - run:
           name: 'Pylint'
           command: |

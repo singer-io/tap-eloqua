@@ -169,7 +169,7 @@ class TestDiscover(unittest.TestCase):
         client = MagicMock()
         with self.assertRaises(Exception) as ctx:
             discover(client)
-        self.assertIn("No stream endpoints are accessible", str(ctx.exception))
+        self.assertIn("do not have read access to any of the supported streams", str(ctx.exception))
 
 
 if __name__ == "__main__":

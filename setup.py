@@ -17,7 +17,8 @@ setup(name='tap-eloqua',
       ],
       extras_require={
           'dev': [
-              'ipdb'
+              'ipdb',
+              'pylint'
           ]
       },
       entry_points='''
