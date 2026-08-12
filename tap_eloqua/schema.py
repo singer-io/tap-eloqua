@@ -1,12 +1,9 @@
 import re
 import os
 import json
-from requests.exceptions import HTTPError
-import singer
 
 SCHEMAS = None
 FIELD_METADATA = None
-LOGGER = singer.get_logger()
 
 ACTIVITY_TYPES = [
     'EmailOpen',
@@ -104,7 +101,7 @@ PKS = {
     'campaigns': ['id'],
     'emails': ['id'],
     'forms': ['id'],
-    'visitors': ['id'],
+    'visitors': [],
     'emailGroups': ['id']
 }
 
@@ -248,11 +245,6 @@ def get_bulk_obj_schema(client, stream_name, obj_name, system_fields, **kwargs):
                            system_fields,
                            **kwargs)
 
-
-def _is_auth_http_error(exc):
-    """Returns True if an HTTPError indicates a 401/403 response."""
-    return exc.response is not None and exc.response.status_code in (401, 403)
-
 def get_abs_path(path):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
 
@@ -268,7 +260,7 @@ def get_static_schemas():
         stream_name = file_name[:-5]
         with open(os.path.join(schemas_path, file_name)) as data_file:
             schema = json.load(data_file)
-
+            
         SCHEMAS[stream_name] = schema
         pk = PKS[stream_name]
 
@@ -296,56 +288,29 @@ def get_schemas(client):
     FIELD_METADATA = {}
 
     for bulk_object in BUILT_IN_BULK_OBJECTS:
-        system_fields = dict(BULK_SYSTEM_FIELDS)
+        system_fields = BULK_SYSTEM_FIELDS
         if bulk_object == 'contacts':
             system_fields.update(CONTACT_ADDITIONAL_FIELDS)
-
-        try:
-            json_schema, metadata = get_bulk_obj_schema(client,
-                                                        bulk_object,
-                                                        bulk_object,
-                                                        system_fields)
-            SCHEMAS[bulk_object] = json_schema
-            FIELD_METADATA[bulk_object] = metadata
-        except HTTPError as err:
-            if _is_auth_http_error(err):
-                LOGGER.warning(
-                    "Stream '%s' will be excluded from schema discovery due to insufficient permissions.",
-                    bulk_object,
-                )
-                continue
-            raise
+        
+        json_schema, metadata = get_bulk_obj_schema(client,
+                                                    bulk_object,
+                                                    bulk_object,
+                                                    system_fields)
+        SCHEMAS[bulk_object] = json_schema
+        FIELD_METADATA[bulk_object] = metadata
 
     for activity_type in ACTIVITY_TYPES:
         stream_name = activity_type_to_stream(activity_type)
-        try:
-            json_schema, metadata = get_bulk_obj_schema(client,
-                                                        stream_name,
-                                                        'activities',
-                                                        ACTIVITY_BASE_SYSTEM_FIELD,
-                                                        activity_type=activity_type)
-            SCHEMAS[stream_name] = json_schema
-            FIELD_METADATA[stream_name] = metadata
-        except HTTPError as err:
-            if _is_auth_http_error(err):
-                LOGGER.warning(
-                    "Stream '%s' will be excluded from schema discovery due to insufficient permissions.",
-                    stream_name,
-                )
-                continue
-            raise
+        json_schema, metadata = get_bulk_obj_schema(client,
+                                                    stream_name,
+                                                    'activities',
+                                                    ACTIVITY_BASE_SYSTEM_FIELD,
+                                                    activity_type=activity_type)
+        SCHEMAS[stream_name] = json_schema
+        FIELD_METADATA[stream_name] = metadata
 
     ## TODO: pagination
-    try:
-        data = client.get('/api/bulk/2.0/customObjects')
-    except HTTPError as err:
-        if _is_auth_http_error(err):
-            LOGGER.warning(
-                "Custom object streams will be excluded from schema discovery due to insufficient permissions.",
-            )
-            data = {'items': []}
-        else:
-            raise
+    data = client.get('/api/bulk/2.0/customObjects')
 
     for custom_obj in data['items']:
         groups = re.match(r'/customObjects/([0-9]+)',
@@ -362,25 +327,16 @@ def get_schemas(client):
         )
 
         query_language_name = 'CustomObject[{}]'.format(object_id)
-        try:
-            json_schema, metadata = get_bulk_schema(
-                client,
-                stream_name,
-                '/api/bulk/2.0/customObjects/{}/fields'.format(object_id),
-                BASE_SYSTEM_FIELD,
-                query_language_name=query_language_name,
-                object_id=object_id)
+        json_schema, metadata = get_bulk_schema(
+            client,
+            stream_name,
+            '/api/bulk/2.0/customObjects/{}/fields'.format(object_id),
+            BASE_SYSTEM_FIELD,
+            query_language_name=query_language_name,
+            object_id=object_id)
 
-            SCHEMAS[stream_name] = json_schema
-            FIELD_METADATA[stream_name] = metadata
-        except HTTPError as err:
-            if _is_auth_http_error(err):
-                LOGGER.warning(
-                    "Stream '%s' will be excluded from schema discovery due to insufficient permissions.",
-                    stream_name,
-                )
-                continue
-            raise
+        SCHEMAS[stream_name] = json_schema
+        FIELD_METADATA[stream_name] = metadata
 
     get_static_schemas()
 

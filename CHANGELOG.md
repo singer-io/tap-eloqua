@@ -2,9 +2,6 @@
 
 ## [1.4.0] 2026-05-29
 - Added per-stream access checks during discovery; static streams returning auth errors are excluded from the catalog
-- Added replication method into metadata [#49](https://github.com/singer-io/tap-eloqua/pull/49)
-- Bump backoff, requests, pendulum, singer-python version [#50](https://github.com/singer-io/tap-eloqua/pull/50)
-- Added unit tests and integration tests
 
 ## [1.3.1] 2025-06-23
 - Bump backoff to `1.10.0`, bump requests to `2.32.4`, bump
