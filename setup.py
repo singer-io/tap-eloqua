@@ -10,14 +10,15 @@ setup(name='tap-eloqua',
       classifiers=['Programming Language :: Python :: 3 :: Only'],
       py_modules=['tap_eloqua'],
       install_requires=[
-          'backoff==1.10.0',
-          'requests==2.32.4',
-          'pendulum==2.0.3',
-          'singer-python==5.13.2'
+          'backoff==2.2.1',
+          'requests==2.34.2',
+          'pendulum==3.2.0',
+          'singer-python==6.8.0'
       ],
       extras_require={
           'dev': [
-              'ipdb'
+              'ipdb',
+              'pylint'
           ]
       },
       entry_points='''

@@ -1,80 +1,152 @@
 {
-	"type": "object",
-	"additionalProperties": false,
-	"properties": {
-		"type": {
-			"type": "string"
-		},
-		"id": {
-			"type": "string"
-		},
-		"createdAt": {
-			"type": "string",
-            "format": "date-time"
-		},
-		"createdBy": {
-			"type": "string"
-		},
-		"depth": {
-			"type": "string"
-		},
-		"name": {
-			"type": "string"
-		},
-		"updatedAt": {
-			"type": "string",
-            "format": "date-time"
-		},
-		"updatedBy": {
-			"type": "string"
-		},
-		"displayName": {
-			"type": "string"
-		},
-		"isSecureNotificationsGroup": {
-			"type": "string"
-		},
-		"isVisibleInOutlookPlugin": {
-			"type": "string"
-		},
-		"isVisibleInPublicSubscriptionList": {
-			"type": "string"
-		},
-		"isWelcomeCommunicationsGroup": {
-			"type": "string"
-		},
-		"notificationEmailId": {
-			"type": "string"
-		},
-		"requireOptIn": {
-			"type": "string"
-		},
-		"subscriptionLandingPageId": {
-			"type": "string"
-		},
-		"subscriptionListDataLookupId": {
-			"type": "string"
-		},
-		"subscriptionListId": {
-			"type": "string"
-		},
-		"unSubscriptionListDataLookupId": {
-			"type": "string"
-		},
-		"unSubscriptionListId": {
-			"type": "string"
-		},
-		"unsubscriptionLandingPageId": {
-			"type": "string"
-		},
-		"useSecureChannel": {
-			"type": "string"
-		},
-		"emailFooterId": {
-			"type": "string"
-		},
-		"emailHeaderId": {
-			"type": "string"
-		}
-	}
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "createdAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "createdBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "depth": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "updatedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "updatedBy": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "displayName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "isSecureNotificationsGroup": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "isVisibleInOutlookPlugin": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "isVisibleInPublicSubscriptionList": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "isWelcomeCommunicationsGroup": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "notificationEmailId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "requireOptIn": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "subscriptionLandingPageId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "subscriptionListDataLookupId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "subscriptionListId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "unSubscriptionListDataLookupId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "unSubscriptionListId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "unsubscriptionLandingPageId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "useSecureChannel": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "emailFooterId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "emailHeaderId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  }
 }
