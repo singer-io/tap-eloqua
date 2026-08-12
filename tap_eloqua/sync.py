@@ -402,7 +402,7 @@ def sync_activity_stream(client,
                 end_date = sync_start
         except ActivityExportTooLarge as ex:
             LOGGER.warn(ex)
-            end_date = last_date.add(seconds=(end_date - last_date).total_seconds() / 2)
+            end_date = last_date.add(seconds=(end_date - last_date).in_seconds() / 2)
             if end_date > sync_start:
                 end_date = sync_start
 
