@@ -101,7 +101,7 @@ PKS = {
     'campaigns': ['id'],
     'emails': ['id'],
     'forms': ['id'],
-    'visitors': ['id'],
+    'visitors': [],
     'emailGroups': ['id']
 }
 
