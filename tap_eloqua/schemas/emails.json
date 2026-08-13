@@ -3,67 +3,127 @@
   "additionalProperties": false,
   "properties": {
     "id": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "type": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "currentStatus": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "name": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "description": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "permissions": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "createdBy": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "createdAt": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "updatedBy": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "updatedAt": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "accessedAt": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "depth": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "subject": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "senderName": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "senderEmail": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "replyToName": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "replyToEmail": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "bounceBackEmail": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "virtualMTAId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "htmlContent": {
-      "type": "object",
+      "type": [
+        "null",
+        "object"
+      ],
       "additionalProperties": false,
       "properties": {
         "html": {
@@ -102,7 +162,7 @@
             "string"
           ]
         },
-        "metaTags":{
+        "metaTags": {
           "type": "array",
           "items": {
             "type": "string"
@@ -129,33 +189,56 @@
       }
     },
     "plainText": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "isPlainTextEditable": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "sendPlainTextOnly": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "isTracked": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "layout": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "style": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "forms": {
-      "type": "array",
+      "type": [
+        "null",
+        "array"
+      ],
       "items": {
         "type": "object",
-        "properties": {
-        }
+        "properties": {}
       }
     },
     "images": {
-      "type": "array",
+      "type": [
+        "null",
+        "array"
+      ],
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -212,7 +295,10 @@
       }
     },
     "hyperlinks": {
-      "type": "array",
+      "type": [
+        "null",
+        "array"
+      ],
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -259,15 +345,20 @@
       }
     },
     "contentSections": {
-      "type": "array",
+      "type": [
+        "null",
+        "array"
+      ],
       "items": {
         "type": "object",
-        "properties": {
-        }
+        "properties": {}
       }
     },
     "dynamicContents": {
-      "type": "array",
+      "type": [
+        "null",
+        "array"
+      ],
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -317,35 +408,54 @@
       }
     },
     "landingPages": {
-      "type": "array",
+      "type": [
+        "null",
+        "array"
+      ],
       "items": {
         "type": "object",
-        "properties": {
-        }
+        "properties": {}
       }
     },
     "files": {
-      "type": "array",
+      "type": [
+        "null",
+        "array"
+      ],
       "items": {
         "type": "object",
-        "properties": {
-        }
+        "properties": {}
       }
     },
     "emailHeaderId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "emailFooterId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "emailGroupId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "encodingId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "fieldMerges": {
-      "type": "array",
+      "type": [
+        "null",
+        "array"
+      ],
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -407,22 +517,40 @@
       }
     },
     "archive": {
-      "type": "boolean"
+      "type": [
+        "null",
+        "boolean"
+      ]
     },
     "folderId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "isContentProtected": {
-      "type": "boolean"
+      "type": [
+        "null",
+        "boolean"
+      ]
     },
     "isPrivate": {
-      "type": "boolean"
+      "type": [
+        "null",
+        "boolean"
+      ]
     },
     "renderMode": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "sourceTemplateId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     }
   }
 }

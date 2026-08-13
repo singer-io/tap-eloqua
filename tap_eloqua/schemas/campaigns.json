@@ -3,127 +3,239 @@
   "additionalProperties": false,
   "properties": {
     "id": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "type": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "currentStatus": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "name": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "description": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "permissions": {
-      "type": "array",
+      "type": [
+        "null",
+        "array"
+      ],
       "items": {
         "type": "string"
       }
     },
     "folderId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "sourceTemplateId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "createdBy": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "createdAt": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "updatedBy": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "updatedAt": {
-      "type": "string",
-        "format": "date-time"
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
     },
     "accessedAt": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "scheduledFor": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "depth": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "elements": {
-      "type": "array",
+      "type": [
+        "null",
+        "array"
+      ],
       "items": {
+        "type": "object",
+        "additionalProperties": true
       }
     },
     "isReadOnly": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "runAsUserId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "startAt": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "endAt": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "budgetedCost": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "actualCost": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "isMemberAllowedReEntry": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "fieldValues": {
-      "type": "array",
+      "type": [
+        "null",
+        "array"
+      ],
       "items": {
+        "type": "object",
+        "additionalProperties": true
       }
     },
     "campaignType": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "product": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "region": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "clrEndDate": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "crmId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "isSyncedWithCRM": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "isIncludedInROI": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "badgeId": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "isEmailMarketingCampaign": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "campaignCategory": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "firstActivation": {
-      "type": "string",
+      "type": [
+        "null",
+        "string"
+      ],
       "format": "date-time"
     },
     "memberCount": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     }
   }
 }

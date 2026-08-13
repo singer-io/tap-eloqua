@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.0] 2026-05-29
+- Added per-stream access checks during discovery; static streams returning auth errors are excluded from the catalog
+- Python Upgrade
+- Added metadata changes
+
 ## [1.3.1] 2025-06-23
 - Bump backoff to `1.10.0`, bump requests to `2.32.4`, bump
   singer-python to 5.13.2
